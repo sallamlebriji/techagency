@@ -136,6 +136,7 @@ function AdminPanel({ standalone = false }) {
   const [newProjectTitle, setNewProjectTitle] = useState('');
   const [savedMessage, setSavedMessage] = useState('');
   const [databaseStatus, setDatabaseStatus] = useState('Chargement MongoDB...');
+  const [apiStatus, setApiStatus] = useState('Verification API...');
   const [isSaving, setIsSaving] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [adminAuthenticated, setAdminAuthenticated] = useState(false);
@@ -187,6 +188,10 @@ function AdminPanel({ standalone = false }) {
 
     async function loadAdminConfig() {
       try {
+        const healthResponse = await fetch(apiUrl('/api/health'), { credentials: 'include' });
+        if (!healthResponse.ok) throw new Error(`API indisponible (${healthResponse.status})`);
+        if (!cancelled) setApiStatus('API connectee');
+
         const authResponse = await fetch(apiUrl('/api/admin-me'), { credentials: 'include' });
         const auth = await authResponse.json();
         if (cancelled) return;
@@ -211,6 +216,7 @@ function AdminPanel({ standalone = false }) {
         setDatabaseStatus('MongoDB connecte');
       } catch (error) {
         if (cancelled) return;
+        setApiStatus(`API non joignable: ${error.message}`);
         setAuthLoading(false);
         setDatabaseStatus('MongoDB non connecte - lance le serveur et verifie MONGODB_URI');
         setSavedMessage(error.message);
@@ -258,7 +264,11 @@ function AdminPanel({ standalone = false }) {
       setAdminPassword('');
       await loadConfigAfterLogin();
     } catch (error) {
-      setSavedMessage(error.message);
+      setSavedMessage(
+        error.message === 'Failed to fetch'
+          ? `Impossible de joindre l API (${getApiBaseUrl()}). Verifie VITE_API_URL, Render et CORS FRONTEND_URL.`
+          : error.message,
+      );
     }
   };
 
@@ -440,6 +450,10 @@ function AdminPanel({ standalone = false }) {
                   {savedMessage}
                 </p>
               )}
+              <div className="mt-4 rounded-lg border border-slate-200 bg-cloud px-4 py-3 text-xs font-bold text-slate-600">
+                <p>API: {getApiBaseUrl()}</p>
+                <p className="mt-1">{apiStatus}</p>
+              </div>
               <button type="submit" className="primary-button mt-6 w-full">
                 <LockKeyhole size={18} />
                 Acceder a l'admin
