@@ -36,7 +36,11 @@ async function getConfigCollection() {
   return db.collection('admin_config');
 }
 
-app.get('/api/health', async (_request, response) => {
+app.get('/api/health', (_request, response) => {
+  response.json({ ok: true, service: 'running' });
+});
+
+app.get('/api/db-health', async (_request, response) => {
   try {
     await getDb();
     response.json({ ok: true, database: 'connected' });

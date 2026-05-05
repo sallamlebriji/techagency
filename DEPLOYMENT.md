@@ -42,12 +42,13 @@ After deploy, test:
 
 ```text
 https://your-render-service.onrender.com/api/health
+https://your-render-service.onrender.com/api/db-health
 ```
 
 Expected:
 
 ```json
-{"ok":true,"database":"connected"}
+{"ok":true,"service":"running"}
 ```
 
 ## 3. Frontend on Vercel
