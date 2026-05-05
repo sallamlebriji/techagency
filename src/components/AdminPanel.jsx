@@ -22,7 +22,7 @@ import {
   EyeOff,
 } from 'lucide-react';
 import LogoMark from './LogoMark.jsx';
-import { apiUrl } from '../lib/api.js';
+import { apiUrl, getApiBaseUrl } from '../lib/api.js';
 
 const tabs = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -389,6 +389,9 @@ function AdminPanel({ standalone = false }) {
                 <p className="text-xs font-extrabold uppercase text-cyan">Statut agence</p>
                 <p className="mt-2 text-sm font-bold leading-6 text-navy">
                   {databaseStatus}
+                </p>
+                <p className="mt-2 break-all text-xs font-semibold text-slate-600">
+                  API: {getApiBaseUrl()}
                 </p>
               </div>
             </aside>
