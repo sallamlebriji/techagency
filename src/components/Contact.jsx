@@ -1,14 +1,7 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2, Mail, MapPin, Phone, Send } from 'lucide-react';
-
-const projectTypes = [
-  'Application web',
-  'Application mobile',
-  'Logiciel sur mesure',
-  'Automatisation',
-  'Solution IA',
-  'Cloud & DevOps',
-];
+import { useState } from 'react';
+import { apiUrl } from '../lib/api.js';
 
 const contactHighlights = [
   'Reponse structuree sous 24h ouvrees',
@@ -17,6 +10,14 @@ const contactHighlights = [
 ];
 
 function Contact({ settings }) {
+  const [formState, setFormState] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    projectType: 'Application web',
+    message: '',
+  });
+  const [formStatus, setFormStatus] = useState('');
   const email = settings?.email || 'contact@techagency.ma';
   const phone = settings?.phone || '+212 6 00 00 00 00';
   const address = settings?.address || 'Casablanca, Maroc';
@@ -29,6 +30,46 @@ function Contact({ settings }) {
     .map((item) => item.trim())
     .filter(Boolean);
   const displayedHighlights = highlights.length > 0 ? highlights : contactHighlights;
+  const projectTypes = String(settings?.projectTypes || '')
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const displayedProjectTypes = projectTypes.length > 0 ? projectTypes : [
+    'Application web',
+    'Application mobile',
+    'Logiciel sur mesure',
+    'Automatisation',
+    'Solution IA',
+    'Cloud & DevOps',
+  ];
+  const successMessage = settings?.formSuccessMessage || 'Votre demande a ete envoyee avec succes.';
+
+  const updateField = (field, value) => {
+    setFormState((current) => ({ ...current, [field]: value }));
+  };
+
+  const submitForm = async (event) => {
+    event.preventDefault();
+    setFormStatus('Envoi en cours...');
+
+    try {
+      const response = await fetch(apiUrl('/api/contact'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formState),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || 'Impossible d envoyer la demande.');
+      }
+
+      setFormStatus(successMessage);
+      setFormState({ name: '', email: '', phone: '', projectType: displayedProjectTypes[0], message: '' });
+    } catch (error) {
+      setFormStatus(error.message);
+    }
+  };
 
   return (
     <section id="contact" className="section-padding scroll-mt-24 bg-cloud">
@@ -83,7 +124,7 @@ function Contact({ settings }) {
           </motion.div>
 
           <motion.form
-            onSubmit={(event) => event.preventDefault()}
+            onSubmit={submitForm}
             initial={{ opacity: 0, x: 24 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.25 }}
@@ -95,6 +136,8 @@ function Contact({ settings }) {
                 <span className="text-sm font-extrabold text-navy">Nom complet</span>
                 <input
                   type="text"
+                  value={formState.name}
+                  onChange={(event) => updateField('name', event.target.value)}
                   placeholder="Votre nom"
                   className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-cyan focus:ring-4 focus:ring-cyan/10"
                 />
@@ -103,6 +146,8 @@ function Contact({ settings }) {
                 <span className="text-sm font-extrabold text-navy">Email</span>
                 <input
                   type="email"
+                  value={formState.email}
+                  onChange={(event) => updateField('email', event.target.value)}
                   placeholder="vous@email.com"
                   className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-cyan focus:ring-4 focus:ring-cyan/10"
                 />
@@ -111,14 +156,20 @@ function Contact({ settings }) {
                 <span className="text-sm font-extrabold text-navy">Telephone</span>
                 <input
                   type="tel"
+                  value={formState.phone}
+                  onChange={(event) => updateField('phone', event.target.value)}
                   placeholder="+212 ..."
                   className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-cyan focus:ring-4 focus:ring-cyan/10"
                 />
               </label>
               <label className="block">
                 <span className="text-sm font-extrabold text-navy">Type de projet</span>
-                <select className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-cyan focus:ring-4 focus:ring-cyan/10">
-                  {projectTypes.map((type) => (
+                <select
+                  value={formState.projectType}
+                  onChange={(event) => updateField('projectType', event.target.value)}
+                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-cyan focus:ring-4 focus:ring-cyan/10"
+                >
+                  {displayedProjectTypes.map((type) => (
                     <option key={type}>{type}</option>
                   ))}
                 </select>
@@ -129,6 +180,8 @@ function Contact({ settings }) {
               <span className="text-sm font-extrabold text-navy">Message</span>
               <textarea
                 rows="6"
+                value={formState.message}
+                onChange={(event) => updateField('message', event.target.value)}
                 placeholder="Decrivez brievement votre besoin, vos objectifs et vos delais..."
                 className="mt-2 w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-cyan focus:ring-4 focus:ring-cyan/10"
               />
@@ -141,6 +194,7 @@ function Contact({ settings }) {
               Envoyer la demande
               <Send size={18} />
             </button>
+            {formStatus && <p className="mt-4 text-center text-sm font-bold text-navy">{formStatus}</p>}
           </motion.form>
         </div>
       </div>

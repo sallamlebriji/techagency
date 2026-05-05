@@ -78,5 +78,16 @@ export const defaultAdminConfig = {
       'Reponse structuree sous 24h ouvrees\nAnalyse initiale de votre besoin\nEstimation claire du perimetre et des priorites',
     footerDescription:
       'Agence technologique specialisee dans la conception et le developpement de solutions informatiques sur mesure, performantes et evolutives.',
+    footerBottomText: 'Concu pour les entreprises ambitieuses.',
+    formRecipientEmail: 'contact@techagency.ma',
+    formSuccessMessage: 'Votre demande a ete envoyee avec succes.',
+    linkedinUrl: '#accueil',
+    twitterUrl: '#accueil',
+    instagramUrl: '#accueil',
+    githubUrl: '#accueil',
+    footerQuickLinks:
+      'Accueil|#accueil\nModeles|#modeles\nPortfolio|#portfolio\nServices|#services\nPour qui ?|#pour-qui\nSolutions|#solutions\nProcessus|#processus\nOffres|#offres\nContact|#contact',
+    footerServices: 'Applications web\nMobile\nLogiciels sur mesure\nIA\nCloud & DevOps',
+    projectTypes: 'Application web\nApplication mobile\nLogiciel sur mesure\nAutomatisation\nSolution IA\nCloud & DevOps',
   },
 };

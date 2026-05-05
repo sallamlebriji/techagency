@@ -1,7 +1,7 @@
 import { Download, Github, Instagram, Linkedin, Twitter } from 'lucide-react';
 import LogoMark from './LogoMark.jsx';
 
-const quickLinks = [
+const defaultQuickLinks = [
   { label: 'Accueil', href: '#accueil' },
   { label: 'Modeles', href: '#modeles' },
   { label: 'Portfolio', href: '#portfolio' },
@@ -13,7 +13,18 @@ const quickLinks = [
   { label: 'Contact', href: '#contact' },
 ];
 
-const footerServices = ['Applications web', 'Mobile', 'Logiciels sur mesure', 'IA', 'Cloud & DevOps'];
+const defaultFooterServices = ['Applications web', 'Mobile', 'Logiciels sur mesure', 'IA', 'Cloud & DevOps'];
+
+function parseLinks(value) {
+  const links = String(value || '')
+    .split('\n')
+    .map((line) => {
+      const [label, href] = line.split('|').map((part) => part?.trim());
+      return label && href ? { label, href } : null;
+    })
+    .filter(Boolean);
+  return links.length > 0 ? links : defaultQuickLinks;
+}
 
 function Footer({ settings }) {
   const agencyName = settings?.agencyName || 'TechAgency';
@@ -22,6 +33,19 @@ function Footer({ settings }) {
   const footerDescription =
     settings?.footerDescription ||
     'Agence technologique specialisee dans la conception et le developpement de solutions informatiques sur mesure, performantes et evolutives.';
+  const quickLinks = parseLinks(settings?.footerQuickLinks);
+  const footerServices = String(settings?.footerServices || '')
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const displayedFooterServices = footerServices.length > 0 ? footerServices : defaultFooterServices;
+  const bottomText = settings?.footerBottomText || 'Concu pour les entreprises ambitieuses.';
+  const socialLinks = [
+    { Icon: Linkedin, href: settings?.linkedinUrl || '#accueil', label: 'LinkedIn' },
+    { Icon: Twitter, href: settings?.twitterUrl || '#accueil', label: 'Twitter' },
+    { Icon: Instagram, href: settings?.instagramUrl || '#accueil', label: 'Instagram' },
+    { Icon: Github, href: settings?.githubUrl || '#accueil', label: 'GitHub' },
+  ];
 
   return (
     <footer className="bg-navy text-white">
@@ -60,7 +84,7 @@ function Footer({ settings }) {
           <div>
             <h3 className="text-sm font-extrabold text-white">Services</h3>
             <div className="mt-4 space-y-3">
-              {footerServices.map((service) => (
+              {displayedFooterServices.map((service) => (
                 <a key={service} href="#services" className="block text-sm text-slate-300 transition hover:text-cyan">
                   {service}
                 </a>
@@ -71,11 +95,13 @@ function Footer({ settings }) {
           <div>
             <h3 className="text-sm font-extrabold text-white">Reseaux sociaux</h3>
             <div className="mt-4 flex gap-3">
-              {[Linkedin, Twitter, Instagram, Github].map((Icon, index) => (
+              {socialLinks.map(({ Icon, href, label }) => (
                 <a
-                  key={index}
-                  href="#accueil"
-                  aria-label="Reseau social"
+                  key={label}
+                  href={href}
+                  aria-label={label}
+                  target={href.startsWith('http') ? '_blank' : undefined}
+                  rel={href.startsWith('http') ? 'noreferrer' : undefined}
                   className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition hover:border-cyan hover:bg-cyan hover:text-navy"
                 >
                   <Icon size={18} />
@@ -88,7 +114,7 @@ function Footer({ settings }) {
 
         <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-6 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} {agencyName}. Tous droits reserves.</p>
-          <p>Concu pour les entreprises ambitieuses.</p>
+          <p>{bottomText}</p>
         </div>
       </div>
     </footer>

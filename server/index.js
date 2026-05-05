@@ -190,6 +190,39 @@ app.put('/api/admin-config', requireAdmin, async (request, response) => {
   }
 });
 
+app.post('/api/contact', async (request, response) => {
+  try {
+    const { name, email, phone, projectType, message } = request.body || {};
+
+    if (!name || !email || !message) {
+      response.status(400).json({ message: 'Nom, email et message sont obligatoires.' });
+      return;
+    }
+
+    const db = await getDb();
+    const collection = db.collection('contact_requests');
+    const configCollection = await getConfigCollection();
+    const savedConfig = await configCollection.findOne({ key: configKey }, { projection: { _id: 0, settings: 1 } });
+    const recipient = savedConfig?.settings?.formRecipientEmail || defaultAdminConfig.settings.formRecipientEmail;
+
+    const document = {
+      name,
+      email,
+      phone: phone || '',
+      projectType: projectType || '',
+      message,
+      recipient,
+      status: 'new',
+      createdAt: new Date(),
+    };
+
+    await collection.insertOne(document);
+    response.json({ ok: true, recipient });
+  } catch (error) {
+    response.status(500).json({ message: 'Impossible d enregistrer la demande.', detail: error.message });
+  }
+});
+
 app.use(express.static(distPath));
 
 app.get('*splat', (request, response, next) => {

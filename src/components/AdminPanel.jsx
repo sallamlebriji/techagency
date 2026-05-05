@@ -166,6 +166,17 @@ function AdminPanel({ standalone = false }) {
       'Reponse structuree sous 24h ouvrees\nAnalyse initiale de votre besoin\nEstimation claire du perimetre et des priorites',
     footerDescription:
       'Agence technologique specialisee dans la conception et le developpement de solutions informatiques sur mesure, performantes et evolutives.',
+    footerBottomText: 'Concu pour les entreprises ambitieuses.',
+    formRecipientEmail: 'contact@techagency.ma',
+    formSuccessMessage: 'Votre demande a ete envoyee avec succes.',
+    linkedinUrl: '#accueil',
+    twitterUrl: '#accueil',
+    instagramUrl: '#accueil',
+    githubUrl: '#accueil',
+    footerQuickLinks:
+      'Accueil|#accueil\nModeles|#modeles\nPortfolio|#portfolio\nServices|#services\nPour qui ?|#pour-qui\nSolutions|#solutions\nProcessus|#processus\nOffres|#offres\nContact|#contact',
+    footerServices: 'Applications web\nMobile\nLogiciels sur mesure\nIA\nCloud & DevOps',
+    projectTypes: 'Application web\nApplication mobile\nLogiciel sur mesure\nAutomatisation\nSolution IA\nCloud & DevOps',
   });
   const ActiveIcon = tabs.find((tab) => tab.id === activeTab)?.icon || LayoutDashboard;
   const selectedSection = sections.find((section) => section.id === selectedSectionId) || sections[0];
@@ -1034,6 +1045,11 @@ function AdminPanel({ standalone = false }) {
                         onChange={(value) => updateSetting('email', value)}
                       />
                       <EditableInput
+                        label="Email destinataire du formulaire"
+                        value={siteSettings.formRecipientEmail}
+                        onChange={(value) => updateSetting('formRecipientEmail', value)}
+                      />
+                      <EditableInput
                         label="Telephone"
                         value={siteSettings.phone}
                         onChange={(value) => updateSetting('phone', value)}
@@ -1061,6 +1077,54 @@ function AdminPanel({ standalone = false }) {
                         value={siteSettings.footerDescription}
                         onChange={(value) => updateSetting('footerDescription', value)}
                         rows={3}
+                      />
+                      <EditableInput
+                        label="Message succes formulaire"
+                        value={siteSettings.formSuccessMessage}
+                        onChange={(value) => updateSetting('formSuccessMessage', value)}
+                      />
+                      <EditableTextarea
+                        label="Types de projets - une ligne par option"
+                        value={siteSettings.projectTypes}
+                        onChange={(value) => updateSetting('projectTypes', value)}
+                        rows={5}
+                      />
+                      <EditableTextarea
+                        label="Liens rapides footer - format Label|#lien"
+                        value={siteSettings.footerQuickLinks}
+                        onChange={(value) => updateSetting('footerQuickLinks', value)}
+                        rows={6}
+                      />
+                      <EditableTextarea
+                        label="Services footer - une ligne par service"
+                        value={siteSettings.footerServices}
+                        onChange={(value) => updateSetting('footerServices', value)}
+                        rows={5}
+                      />
+                      <EditableInput
+                        label="Texte bas footer"
+                        value={siteSettings.footerBottomText}
+                        onChange={(value) => updateSetting('footerBottomText', value)}
+                      />
+                      <EditableInput
+                        label="LinkedIn URL"
+                        value={siteSettings.linkedinUrl}
+                        onChange={(value) => updateSetting('linkedinUrl', value)}
+                      />
+                      <EditableInput
+                        label="Twitter/X URL"
+                        value={siteSettings.twitterUrl}
+                        onChange={(value) => updateSetting('twitterUrl', value)}
+                      />
+                      <EditableInput
+                        label="Instagram URL"
+                        value={siteSettings.instagramUrl}
+                        onChange={(value) => updateSetting('instagramUrl', value)}
+                      />
+                      <EditableInput
+                        label="GitHub URL"
+                        value={siteSettings.githubUrl}
+                        onChange={(value) => updateSetting('githubUrl', value)}
                       />
                     </div>
                   </div>
