@@ -19,6 +19,9 @@ function Footer({ settings }) {
   const agencyName = settings?.agencyName || 'TechAgency';
   const tagline = settings?.tagline || 'Digital systems studio';
   const email = settings?.email || 'contact@techagency.ma';
+  const footerDescription =
+    settings?.footerDescription ||
+    'Agence technologique specialisee dans la conception et le developpement de solutions informatiques sur mesure, performantes et evolutives.';
 
   return (
     <footer className="bg-navy text-white">
@@ -32,10 +35,7 @@ function Footer({ settings }) {
                 <span className="text-xs font-bold uppercase text-slate-400">{tagline}</span>
               </span>
             </a>
-            <p className="mt-5 max-w-sm text-sm leading-7 text-slate-300">
-              Agence technologique spécialisée dans la conception et le développement de solutions informatiques
-              sur mesure, performantes et évolutives.
-            </p>
+            <p className="mt-5 max-w-sm text-sm leading-7 text-slate-300">{footerDescription}</p>
             <a
               href="/techagency-logo.svg"
               download
@@ -50,11 +50,7 @@ function Footer({ settings }) {
             <h3 className="text-sm font-extrabold text-white">Liens rapides</h3>
             <div className="mt-4 space-y-3">
               {quickLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="block text-sm text-slate-300 transition hover:text-cyan"
-                >
+                <a key={link.href} href={link.href} className="block text-sm text-slate-300 transition hover:text-cyan">
                   {link.label}
                 </a>
               ))}
@@ -73,13 +69,13 @@ function Footer({ settings }) {
           </div>
 
           <div>
-            <h3 className="text-sm font-extrabold text-white">Réseaux sociaux</h3>
+            <h3 className="text-sm font-extrabold text-white">Reseaux sociaux</h3>
             <div className="mt-4 flex gap-3">
               {[Linkedin, Twitter, Instagram, Github].map((Icon, index) => (
                 <a
                   key={index}
                   href="#accueil"
-                  aria-label="Réseau social"
+                  aria-label="Reseau social"
                   className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition hover:border-cyan hover:bg-cyan hover:text-navy"
                 >
                   <Icon size={18} />
@@ -91,8 +87,8 @@ function Footer({ settings }) {
         </div>
 
         <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-6 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} {agencyName}. Tous droits réservés.</p>
-          <p>Conçu pour les entreprises ambitieuses.</p>
+          <p>© {new Date().getFullYear()} {agencyName}. Tous droits reserves.</p>
+          <p>Concu pour les entreprises ambitieuses.</p>
         </div>
       </div>
     </footer>

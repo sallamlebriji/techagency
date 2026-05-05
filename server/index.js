@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import cors from 'cors';
+import crypto from 'node:crypto';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,10 +17,48 @@ const allowedOrigins = (process.env.FRONTEND_URL || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+const adminPassword = process.env.ADMIN_PASSWORD || 'change-me-now';
+const cookieName = 'techagency_admin';
+
+function signToken(value) {
+  return crypto.createHmac('sha256', adminPassword).update(value).digest('hex');
+}
+
+function createAdminToken() {
+  const payload = `admin.${Date.now()}`;
+  return `${payload}.${signToken(payload)}`;
+}
+
+function parseCookies(cookieHeader = '') {
+  return Object.fromEntries(
+    cookieHeader
+      .split(';')
+      .map((cookie) => cookie.trim().split('='))
+      .filter(([key, value]) => key && value)
+      .map(([key, value]) => [key, decodeURIComponent(value)]),
+  );
+}
+
+function isValidAdminToken(token) {
+  if (!token || !token.includes('.')) return false;
+  const [role, timestamp, signature] = token.split('.');
+  const payload = `${role}.${timestamp}`;
+  return role === 'admin' && signature === signToken(payload);
+}
+
+function requireAdmin(request, response, next) {
+  const token = parseCookies(request.headers.cookie)[cookieName];
+  if (!isValidAdminToken(token)) {
+    response.status(401).json({ message: 'Authentification admin requise.' });
+    return;
+  }
+  next();
+}
 
 app.use(express.json({ limit: '1mb' }));
 app.use(
   cors({
+    credentials: true,
     origin(origin, callback) {
       if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
         callback(null, true);
@@ -30,6 +69,33 @@ app.use(
     },
   }),
 );
+
+app.post('/api/admin-login', (request, response) => {
+  if (!request.body?.password || request.body.password !== adminPassword) {
+    response.status(401).json({ message: 'Mot de passe admin incorrect.' });
+    return;
+  }
+
+  const secure = process.env.NODE_ENV === 'production';
+  response.cookie(cookieName, createAdminToken(), {
+    httpOnly: true,
+    secure,
+    sameSite: secure ? 'none' : 'lax',
+    maxAge: 1000 * 60 * 60 * 12,
+    path: '/',
+  });
+  response.json({ ok: true });
+});
+
+app.post('/api/admin-logout', (_request, response) => {
+  response.clearCookie(cookieName, { path: '/' });
+  response.json({ ok: true });
+});
+
+app.get('/api/admin-me', (request, response) => {
+  const token = parseCookies(request.headers.cookie)[cookieName];
+  response.json({ authenticated: isValidAdminToken(token) });
+});
 
 async function getConfigCollection() {
   const db = await getDb();
@@ -49,7 +115,7 @@ app.get('/api/db-health', async (_request, response) => {
   }
 });
 
-app.get('/api/admin-config', async (_request, response) => {
+app.get('/api/admin-config', requireAdmin, async (_request, response) => {
   try {
     const collection = await getConfigCollection();
     const savedConfig = await collection.findOne({ key: configKey }, { projection: { _id: 0 } });
@@ -92,7 +158,7 @@ app.get('/api/public-content', async (_request, response) => {
   }
 });
 
-app.put('/api/admin-config', async (request, response) => {
+app.put('/api/admin-config', requireAdmin, async (request, response) => {
   try {
     const { sections, offers, projects, settings } = request.body;
 

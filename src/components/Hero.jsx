@@ -139,7 +139,16 @@ function TechAgencyDemoVisual() {
   );
 }
 
-function Hero() {
+function Hero({ settings }) {
+  const heroEyebrow = settings?.heroEyebrow || 'Agence tech premium pour solutions sur mesure';
+  const heroTitle =
+    settings?.heroTitle || 'Des plateformes digitales elegantes, solides et pretes a faire grandir votre activite.';
+  const heroDescription =
+    settings?.heroDescription ||
+    'TechAgency concoit des applications web, logiciels metiers, systemes de gestion, plateformes mobiles et solutions IA avec une exigence de clarte, de securite et de performance.';
+  const primaryCta = settings?.heroPrimaryCta || 'Planifier un audit';
+  const secondaryCta = settings?.heroSecondaryCta || 'Voir nos realisations';
+
   return (
     <section id="accueil" className="relative scroll-mt-24 overflow-hidden bg-cloud pt-28 sm:pt-32">
       <div className="absolute inset-0 hero-dots opacity-70" />
@@ -149,23 +158,22 @@ function Hero() {
         <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
           <span className="eyebrow bg-white">
             <Sparkles size={14} />
-            Agence tech premium pour solutions sur mesure
+            {heroEyebrow}
           </span>
           <h1 className="mt-6 max-w-4xl font-display text-4xl font-bold leading-tight text-navy sm:text-5xl lg:text-6xl">
-            Des plateformes digitales elegantes, solides et pretes a faire grandir votre activite.
+            {heroTitle}
           </h1>
           <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-            TechAgency concoit des applications web, logiciels metiers, systemes de gestion, plateformes mobiles
-            et solutions IA avec une exigence de clarte, de securite et de performance.
+            {heroDescription}
           </p>
 
           <div className="mt-9 flex flex-col gap-4 sm:flex-row">
             <a href="#contact" className="primary-button">
-              Planifier un audit
+              {primaryCta}
               <ArrowRight size={18} />
             </a>
             <a href="#portfolio" className="secondary-button">
-              Voir nos realisations
+              {secondaryCta}
             </a>
           </div>
 

@@ -110,6 +110,20 @@ function EditableInput({ label, value, onChange, type = 'text' }) {
   );
 }
 
+function EditableTextarea({ label, value, onChange, rows = 4 }) {
+  return (
+    <label className="block">
+      <span className="text-xs font-extrabold uppercase text-slate-500">{label}</span>
+      <textarea
+        value={value}
+        rows={rows}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-navy outline-none transition focus:border-cyan focus:ring-4 focus:ring-cyan/10"
+      />
+    </label>
+  );
+}
+
 function AdminPanel({ standalone = false }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sections, setSections] = useState(initialSections);
@@ -123,6 +137,9 @@ function AdminPanel({ standalone = false }) {
   const [savedMessage, setSavedMessage] = useState('');
   const [databaseStatus, setDatabaseStatus] = useState('Chargement MongoDB...');
   const [isSaving, setIsSaving] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [adminAuthenticated, setAdminAuthenticated] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
   const [siteSettings, setSiteSettings] = useState({
     agencyName: 'TechAgency',
     tagline: 'Software & AI Studio',
@@ -136,6 +153,19 @@ function AdminPanel({ standalone = false }) {
     notifications: true,
     backups: true,
     adminProtection: true,
+    heroEyebrow: 'Agence tech premium pour solutions sur mesure',
+    heroTitle: 'Des plateformes digitales elegantes, solides et pretes a faire grandir votre activite.',
+    heroDescription:
+      'TechAgency concoit des applications web, logiciels metiers, systemes de gestion, plateformes mobiles et solutions IA avec une exigence de clarte, de securite et de performance.',
+    heroPrimaryCta: 'Planifier un audit',
+    heroSecondaryCta: 'Voir nos realisations',
+    contactTitle: 'Donnez-nous le contexte, nous vous aidons a structurer la solution.',
+    contactDescription:
+      'Decrivez votre besoin, vos contraintes et vos objectifs. Nous vous repondons avec une premiere lecture technique claire et des prochaines etapes concretes.',
+    contactHighlights:
+      'Reponse structuree sous 24h ouvrees\nAnalyse initiale de votre besoin\nEstimation claire du perimetre et des priorites',
+    footerDescription:
+      'Agence technologique specialisee dans la conception et le developpement de solutions informatiques sur mesure, performantes et evolutives.',
   });
   const ActiveIcon = tabs.find((tab) => tab.id === activeTab)?.icon || LayoutDashboard;
   const selectedSection = sections.find((section) => section.id === selectedSectionId) || sections[0];
@@ -145,7 +175,18 @@ function AdminPanel({ standalone = false }) {
 
     async function loadAdminConfig() {
       try {
-        const response = await fetch(apiUrl('/api/admin-config'));
+        const authResponse = await fetch(apiUrl('/api/admin-me'), { credentials: 'include' });
+        const auth = await authResponse.json();
+        if (cancelled) return;
+        setAdminAuthenticated(Boolean(auth.authenticated));
+        setAuthLoading(false);
+
+        if (!auth.authenticated) {
+          setDatabaseStatus('Authentification admin requise');
+          return;
+        }
+
+        const response = await fetch(apiUrl('/api/admin-config'), { credentials: 'include' });
         if (!response.ok) throw new Error('API indisponible');
         const config = await response.json();
         if (cancelled) return;
@@ -158,6 +199,7 @@ function AdminPanel({ standalone = false }) {
         setDatabaseStatus('MongoDB connecte');
       } catch (error) {
         if (cancelled) return;
+        setAuthLoading(false);
         setDatabaseStatus('MongoDB non connecte - lance le serveur et verifie MONGODB_URI');
         setSavedMessage(error.message);
       }
@@ -170,6 +212,43 @@ function AdminPanel({ standalone = false }) {
     };
   }, []);
 
+  const loadConfigAfterLogin = async () => {
+    const response = await fetch(apiUrl('/api/admin-config'), { credentials: 'include' });
+    if (!response.ok) throw new Error('API indisponible');
+    const config = await response.json();
+    setSections(config.sections || initialSections);
+    setOffers(config.offers || initialOffers);
+    setProjects(config.projects || initialProjects);
+    setSiteSettings((current) => ({ ...current, ...(config.settings || {}) }));
+    setSelectedSectionId((config.sections || initialSections)[0]?.id || 0);
+    setDatabaseStatus('MongoDB connecte');
+  };
+
+  const loginAdmin = async (event) => {
+    event.preventDefault();
+    setSavedMessage('');
+
+    try {
+      const response = await fetch(apiUrl('/api/admin-login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password: adminPassword }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || 'Mot de passe incorrect');
+      }
+
+      setAdminAuthenticated(true);
+      setAdminPassword('');
+      await loadConfigAfterLogin();
+    } catch (error) {
+      setSavedMessage(error.message);
+    }
+  };
+
   const saveAdminState = async () => {
     setIsSaving(true);
     setSavedMessage('');
@@ -178,6 +257,7 @@ function AdminPanel({ standalone = false }) {
       const response = await fetch(apiUrl('/api/admin-config'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ sections, offers, projects, settings: siteSettings }),
       });
 
@@ -294,6 +374,64 @@ function AdminPanel({ standalone = false }) {
   const deleteProject = (id) => {
     setProjects((current) => current.filter((project) => project.id !== id));
   };
+
+  if (authLoading) {
+    return (
+      <section className="min-h-screen bg-cloud py-10">
+        <div className="container-shell">
+          <div className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-soft">
+            <LogoMark className="mx-auto h-14 w-14 rounded-lg" />
+            <p className="mt-5 text-lg font-extrabold text-navy">Chargement de l'espace admin...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!adminAuthenticated) {
+    return (
+      <section className="min-h-screen bg-cloud py-10">
+        <div className="container-shell">
+          <div className="mx-auto max-w-lg rounded-lg border border-slate-200 bg-white p-6 shadow-premium sm:p-8">
+            <a href="/" className="flex items-center gap-3">
+              <LogoMark className="h-12 w-12 rounded-lg shadow-sm" />
+              <span>
+                <span className="block text-xl font-extrabold leading-none text-navy">TechAgency Admin</span>
+                <span className="text-xs font-extrabold uppercase text-cyan">Acces securise</span>
+              </span>
+            </a>
+
+            <form onSubmit={loginAdmin} className="mt-8">
+              <label className="block">
+                <span className="text-sm font-extrabold text-navy">Mot de passe admin</span>
+                <input
+                  type="password"
+                  value={adminPassword}
+                  onChange={(event) => setAdminPassword(event.target.value)}
+                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-navy outline-none transition focus:border-cyan focus:ring-4 focus:ring-cyan/10"
+                  placeholder="Entrer le mot de passe"
+                />
+              </label>
+              {savedMessage && (
+                <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600">
+                  {savedMessage}
+                </p>
+              )}
+              <button type="submit" className="primary-button mt-6 w-full">
+                <LockKeyhole size={18} />
+                Acceder a l'admin
+              </button>
+            </form>
+
+            <a href="/" className="secondary-button mt-4 w-full">
+              <PanelLeft size={17} />
+              Retour au site
+            </a>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="admin" className={`${standalone ? 'min-h-screen py-8' : 'section-padding scroll-mt-24 bg-white'}`}>
@@ -854,6 +992,75 @@ function AdminPanel({ standalone = false }) {
                         label="Domaine"
                         value={siteSettings.domain}
                         onChange={(value) => updateSetting('domain', value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
+                    <h3 className="text-xl font-extrabold text-navy">Textes du site public</h3>
+                    <p className="mt-1 text-sm font-semibold text-slate-500">
+                      Ces champs pilotent les grandes zones visibles : accueil, contact et footer.
+                    </p>
+                    <div className="mt-5 grid gap-4 md:grid-cols-2">
+                      <EditableInput
+                        label="Badge Hero"
+                        value={siteSettings.heroEyebrow}
+                        onChange={(value) => updateSetting('heroEyebrow', value)}
+                      />
+                      <EditableInput
+                        label="CTA principal"
+                        value={siteSettings.heroPrimaryCta}
+                        onChange={(value) => updateSetting('heroPrimaryCta', value)}
+                      />
+                      <EditableTextarea
+                        label="Titre Hero"
+                        value={siteSettings.heroTitle}
+                        onChange={(value) => updateSetting('heroTitle', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Description Hero"
+                        value={siteSettings.heroDescription}
+                        onChange={(value) => updateSetting('heroDescription', value)}
+                        rows={3}
+                      />
+                      <EditableInput
+                        label="CTA secondaire"
+                        value={siteSettings.heroSecondaryCta}
+                        onChange={(value) => updateSetting('heroSecondaryCta', value)}
+                      />
+                      <EditableInput
+                        label="Email contact"
+                        value={siteSettings.email}
+                        onChange={(value) => updateSetting('email', value)}
+                      />
+                      <EditableInput
+                        label="Telephone"
+                        value={siteSettings.phone}
+                        onChange={(value) => updateSetting('phone', value)}
+                      />
+                      <EditableTextarea
+                        label="Titre Contact"
+                        value={siteSettings.contactTitle}
+                        onChange={(value) => updateSetting('contactTitle', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Description Contact"
+                        value={siteSettings.contactDescription}
+                        onChange={(value) => updateSetting('contactDescription', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Points forts Contact - une ligne par point"
+                        value={siteSettings.contactHighlights}
+                        onChange={(value) => updateSetting('contactHighlights', value)}
+                        rows={4}
+                      />
+                      <EditableTextarea
+                        label="Description Footer"
+                        value={siteSettings.footerDescription}
+                        onChange={(value) => updateSetting('footerDescription', value)}
+                        rows={3}
                       />
                     </div>
                   </div>

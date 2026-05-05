@@ -65,5 +65,18 @@ export const defaultAdminConfig = {
     notifications: true,
     backups: true,
     adminProtection: true,
+    heroEyebrow: 'Agence tech premium pour solutions sur mesure',
+    heroTitle: 'Des plateformes digitales elegantes, solides et pretes a faire grandir votre activite.',
+    heroDescription:
+      'TechAgency concoit des applications web, logiciels metiers, systemes de gestion, plateformes mobiles et solutions IA avec une exigence de clarte, de securite et de performance.',
+    heroPrimaryCta: 'Planifier un audit',
+    heroSecondaryCta: 'Voir nos realisations',
+    contactTitle: 'Donnez-nous le contexte, nous vous aidons a structurer la solution.',
+    contactDescription:
+      'Decrivez votre besoin, vos contraintes et vos objectifs. Nous vous repondons avec une premiere lecture technique claire et des prochaines etapes concretes.',
+    contactHighlights:
+      'Reponse structuree sous 24h ouvrees\nAnalyse initiale de votre besoin\nEstimation claire du perimetre et des priorites',
+    footerDescription:
+      'Agence technologique specialisee dans la conception et le developpement de solutions informatiques sur mesure, performantes et evolutives.',
   },
 };
