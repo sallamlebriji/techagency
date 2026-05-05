@@ -36,7 +36,18 @@ Environment variables:
 MONGODB_URI=your MongoDB Atlas URI
 MONGODB_DB=techagency
 FRONTEND_URL=https://your-vercel-app.vercel.app
+ADMIN_EMAIL=admin@your-domain.com
+ADMIN_PASSWORD=use-a-strong-password
+SESSION_SECRET=use-a-long-random-secret
 ```
+
+The first backend startup creates the admin user in MongoDB if `ADMIN_EMAIL` and `ADMIN_PASSWORD` are set. You can also run:
+
+```bash
+npm run create-admin
+```
+
+This creates or updates the admin user in the `admin_users` collection.
 
 After deploy, test:
 
