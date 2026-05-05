@@ -14,6 +14,7 @@ import Pricing from './components/Pricing.jsx';
 import AdminPanel from './components/AdminPanel.jsx';
 import Contact from './components/Contact.jsx';
 import Footer from './components/Footer.jsx';
+import Maintenance from './components/Maintenance.jsx';
 import { apiUrl } from './lib/api.js';
 
 const sectionMap = [
@@ -132,6 +133,10 @@ function App() {
         <AdminPanel standalone />
       </div>
     );
+  }
+
+  if (publicContent.settings?.maintenance) {
+    return <Maintenance settings={publicContent.settings} />;
   }
 
   return (
