@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import bcrypt from 'bcryptjs';
 import cors from 'cors';
 import crypto from 'node:crypto';
 import express from 'express';
@@ -17,15 +18,20 @@ const allowedOrigins = (process.env.FRONTEND_URL || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
-const adminPassword = process.env.ADMIN_PASSWORD || 'change-me-now';
+const adminEmail = process.env.ADMIN_EMAIL || 'admin@techagency.local';
+const adminPassword = process.env.ADMIN_PASSWORD || '';
 const cookieName = 'techagency_admin';
 
-function signToken(value) {
-  return crypto.createHmac('sha256', adminPassword).update(value).digest('hex');
+function getSessionSecret() {
+  return process.env.SESSION_SECRET || process.env.ADMIN_PASSWORD || 'dev-session-secret-change-me';
 }
 
-function createAdminToken() {
-  const payload = `admin.${Date.now()}`;
+function signToken(value) {
+  return crypto.createHmac('sha256', getSessionSecret()).update(value).digest('hex');
+}
+
+function createAdminToken(userId) {
+  const payload = `admin.${userId}.${Date.now()}`;
   return `${payload}.${signToken(payload)}`;
 }
 
@@ -41,8 +47,8 @@ function parseCookies(cookieHeader = '') {
 
 function isValidAdminToken(token) {
   if (!token || !token.includes('.')) return false;
-  const [role, timestamp, signature] = token.split('.');
-  const payload = `${role}.${timestamp}`;
+  const [role, userId, timestamp, signature] = token.split('.');
+  const payload = `${role}.${userId}.${timestamp}`;
   return role === 'admin' && signature === signToken(payload);
 }
 
@@ -70,21 +76,38 @@ app.use(
   }),
 );
 
-app.post('/api/admin-login', (request, response) => {
-  if (!request.body?.password || request.body.password !== adminPassword) {
-    response.status(401).json({ message: 'Mot de passe admin incorrect.' });
-    return;
-  }
+app.post('/api/admin-login', async (request, response) => {
+  try {
+    const { email, password } = request.body || {};
 
-  const secure = process.env.NODE_ENV === 'production';
-  response.cookie(cookieName, createAdminToken(), {
-    httpOnly: true,
-    secure,
-    sameSite: secure ? 'none' : 'lax',
-    maxAge: 1000 * 60 * 60 * 12,
-    path: '/',
-  });
-  response.json({ ok: true });
+    if (!email || !password) {
+      response.status(400).json({ message: 'Email et mot de passe obligatoires.' });
+      return;
+    }
+
+    const collection = await getAdminUsersCollection();
+    const user = await collection.findOne({ email: String(email).toLowerCase() });
+    const validPassword = user ? await bcrypt.compare(password, user.passwordHash) : false;
+
+    if (!user || !validPassword) {
+      response.status(401).json({ message: 'Identifiants admin incorrects.' });
+      return;
+    }
+
+    await collection.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } });
+
+    const secure = process.env.NODE_ENV === 'production';
+    response.cookie(cookieName, createAdminToken(String(user._id)), {
+      httpOnly: true,
+      secure,
+      sameSite: secure ? 'none' : 'lax',
+      maxAge: 1000 * 60 * 60 * 12,
+      path: '/',
+    });
+    response.json({ ok: true, user: { email: user.email, name: user.name } });
+  } catch (error) {
+    response.status(500).json({ message: 'Erreur authentification admin.', detail: error.message });
+  }
 });
 
 app.post('/api/admin-logout', (_request, response) => {
@@ -100,6 +123,29 @@ app.get('/api/admin-me', (request, response) => {
 async function getConfigCollection() {
   const db = await getDb();
   return db.collection('admin_config');
+}
+
+async function getAdminUsersCollection() {
+  const db = await getDb();
+  return db.collection('admin_users');
+}
+
+async function ensureDefaultAdminUser() {
+  const collection = await getAdminUsersCollection();
+  await collection.createIndex({ email: 1 }, { unique: true });
+
+  const email = adminEmail.toLowerCase();
+  const existingUser = await collection.findOne({ email });
+  if (existingUser || !adminPassword) return;
+
+  const passwordHash = await bcrypt.hash(adminPassword, 12);
+  await collection.insertOne({
+    email,
+    name: 'TechAgency Admin',
+    passwordHash,
+    role: 'admin',
+    createdAt: new Date(),
+  });
 }
 
 app.get('/api/health', (_request, response) => {
@@ -234,6 +280,12 @@ app.get('*splat', (request, response, next) => {
   response.sendFile(path.join(distPath, 'index.html'));
 });
 
-app.listen(port, () => {
-  console.log(`TechAgency API running on http://127.0.0.1:${port}`);
-});
+ensureDefaultAdminUser()
+  .catch((error) => {
+    console.warn(`Default admin seed skipped: ${error.message}`);
+  })
+  .finally(() => {
+    app.listen(port, () => {
+      console.log(`TechAgency API running on http://127.0.0.1:${port}`);
+    });
+  });

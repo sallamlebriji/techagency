@@ -139,6 +139,7 @@ function AdminPanel({ standalone = false }) {
   const [isSaving, setIsSaving] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [adminAuthenticated, setAdminAuthenticated] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [siteSettings, setSiteSettings] = useState({
     agencyName: 'TechAgency',
@@ -244,7 +245,7 @@ function AdminPanel({ standalone = false }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ password: adminPassword }),
+        body: JSON.stringify({ email: adminEmail, password: adminPassword }),
       });
 
       if (!response.ok) {
@@ -253,6 +254,7 @@ function AdminPanel({ standalone = false }) {
       }
 
       setAdminAuthenticated(true);
+      setAdminEmail('');
       setAdminPassword('');
       await loadConfigAfterLogin();
     } catch (error) {
@@ -413,6 +415,16 @@ function AdminPanel({ standalone = false }) {
             </a>
 
             <form onSubmit={loginAdmin} className="mt-8">
+              <label className="mt-4 block">
+                <span className="text-sm font-extrabold text-navy">Email admin</span>
+                <input
+                  type="email"
+                  value={adminEmail}
+                  onChange={(event) => setAdminEmail(event.target.value)}
+                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-navy outline-none transition focus:border-cyan focus:ring-4 focus:ring-cyan/10"
+                  placeholder="admin@techagency.local"
+                />
+              </label>
               <label className="block">
                 <span className="text-sm font-extrabold text-navy">Mot de passe admin</span>
                 <input
