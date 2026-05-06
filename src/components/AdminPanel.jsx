@@ -2,15 +2,20 @@ import { useEffect, useState } from 'react';
 import {
   Bell,
   BriefcaseBusiness,
+  CalendarDays,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   CreditCard,
   Download,
   FileText,
   LayoutDashboard,
   LockKeyhole,
   Mail,
+  MessageSquareText,
   Palette,
   PanelLeft,
+  Phone,
   Plus,
   Save,
   Settings,
@@ -18,6 +23,7 @@ import {
   Sparkles,
   Trash2,
   Users,
+  UserRound,
   Eye,
   EyeOff,
 } from 'lucide-react';
@@ -40,6 +46,13 @@ const leads = [
   { name: 'Coach business', type: 'Modele interactif', status: 'Relance', value: 'Appel planifie' },
 ];
 
+const initialDashboardStats = {
+  requests: 0,
+  openQuotes: 0,
+  activeModels: '0',
+  responseRate: '0%',
+};
+
 const initialSections = [
   {
     id: 1,
@@ -57,24 +70,73 @@ const initialSections = [
   },
   {
     id: 3,
-    title: 'Services et solutions',
-    type: 'Cards',
+    title: 'Services',
+    type: 'Services',
     visible: true,
     blocks: ['Applications web', 'Mobile', 'IA', 'Cloud & DevOps'],
   },
   {
     id: 4,
+    title: 'Pour qui ?',
+    type: 'Audience',
+    visible: true,
+    blocks: ['PME / TPE', 'Startups', 'Ecoles', 'Commerce'],
+  },
+  {
+    id: 5,
+    title: 'Solutions',
+    type: 'Solutions',
+    visible: true,
+    blocks: ['Gestion commerciale', 'Reservation', 'E-commerce', 'CRM / ERP'],
+  },
+  {
+    id: 6,
+    title: 'Processus',
+    type: 'Processus',
+    visible: true,
+    blocks: ['Analyse', 'Conception', 'Developpement', 'Deploiement'],
+  },
+  {
+    id: 7,
+    title: 'Technologies',
+    type: 'Technologies',
+    visible: true,
+    blocks: ['Frontend', 'Backend', 'Data', 'IA'],
+  },
+  {
+    id: 8,
+    title: 'A propos',
+    type: 'A propos',
+    visible: true,
+    blocks: ['Texte agence', 'Image', 'Statistiques'],
+  },
+  {
+    id: 9,
+    title: 'Temoignages',
+    type: 'Temoignage',
+    visible: true,
+    blocks: ['Clients verifies', 'Avis', 'Preuves'],
+  },
+  {
+    id: 10,
+    title: 'Offres',
+    type: 'Offres',
+    visible: true,
+    blocks: ['Pack Digital', 'Pack Business System', 'Pack Sur Mesure'],
+  },
+  {
+    id: 11,
+    title: 'Contact',
+    type: 'Contact',
+    visible: true,
+    blocks: ['Formulaire', 'Email', 'Telephone', 'Adresse'],
+  },
+  {
+    id: 12,
     title: 'Portfolio et projets',
     type: 'Portfolio',
     visible: true,
     blocks: ['Projet 1', 'Projet 2', 'Projet 3'],
-  },
-  {
-    id: 5,
-    title: 'Temoignages et offres',
-    type: 'Conversion',
-    visible: true,
-    blocks: ['Temoignages', 'Pack Digital', 'Pack Business System'],
   },
 ];
 
@@ -124,6 +186,88 @@ function EditableTextarea({ label, value, onChange, rows = 4 }) {
   );
 }
 
+const adminTokenKey = 'techagency_admin_token';
+
+function getAdminToken() {
+  return window.localStorage.getItem(adminTokenKey) || '';
+}
+
+function setAdminToken(token) {
+  if (token) {
+    window.localStorage.setItem(adminTokenKey, token);
+    return;
+  }
+  window.localStorage.removeItem(adminTokenKey);
+}
+
+function adminFetch(path, options = {}) {
+  const token = getAdminToken();
+  const headers = new Headers(options.headers || {});
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  return fetch(apiUrl(path), {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
+}
+
+function imageFileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    if (!file?.type?.startsWith('image/')) {
+      reject(new Error('Selectionne une image valide.'));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Impossible de lire l image.'));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error('Image invalide.'));
+      image.onload = () => {
+        const maxWidth = 1200;
+        const scale = Math.min(1, maxWidth / image.width);
+        const width = Math.round(image.width * scale);
+        const height = Math.round(image.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+        context.drawImage(image, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/webp', 0.82));
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function loadDashboardData() {
+  const response = await adminFetch('/api/admin-dashboard');
+  if (!response.ok) throw new Error(`Dashboard indisponible (${response.status})`);
+  return response.json();
+}
+
+async function loadLeadsData() {
+  const response = await adminFetch('/api/admin-leads');
+  if (!response.ok) throw new Error(`Demandes indisponibles (${response.status})`);
+  return response.json();
+}
+
+const leadStatuses = [
+  { value: 'new', label: 'Nouveau' },
+  { value: 'open', label: 'Ouvert' },
+  { value: 'in_progress', label: 'En traitement' },
+  { value: 'pending', label: 'En attente' },
+  { value: 'answered', label: 'Repondu' },
+  { value: 'closed', label: 'Cloture' },
+  { value: 'archived', label: 'Archive' },
+];
+
+function getStatusLabel(status) {
+  return leadStatuses.find((item) => item.value === status)?.label || status || 'Nouveau';
+}
+
 function AdminPanel({ standalone = false }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sections, setSections] = useState(initialSections);
@@ -134,6 +278,10 @@ function AdminPanel({ standalone = false }) {
   const [newOfferName, setNewOfferName] = useState('');
   const [projects, setProjects] = useState(initialProjects);
   const [newProjectTitle, setNewProjectTitle] = useState('');
+  const [dashboardStats, setDashboardStats] = useState(initialDashboardStats);
+  const [dashboardLeads, setDashboardLeads] = useState([]);
+  const [selectedLeadId, setSelectedLeadId] = useState('');
+  const [leadFilter, setLeadFilter] = useState('all');
   const [savedMessage, setSavedMessage] = useState('');
   const [databaseStatus, setDatabaseStatus] = useState('Chargement MongoDB...');
   const [apiStatus, setApiStatus] = useState('Verification API...');
@@ -151,16 +299,40 @@ function AdminPanel({ standalone = false }) {
     domain: 'techagency.ma',
     primaryColor: '#081A33',
     accentColor: '#25D7D7',
+    logoImage: '',
+    logoFileName: 'techagency-logo.svg',
     maintenance: false,
     notifications: true,
     backups: true,
     adminProtection: true,
+    dashboardModelsActive: '3',
+    dashboardResponseRate: '94%',
     heroEyebrow: 'Agence tech premium pour solutions sur mesure',
     heroTitle: 'Des plateformes digitales elegantes, solides et pretes a faire grandir votre activite.',
     heroDescription:
       'TechAgency concoit des applications web, logiciels metiers, systemes de gestion, plateformes mobiles et solutions IA avec une exigence de clarte, de securite et de performance.',
     heroPrimaryCta: 'Planifier un audit',
     heroSecondaryCta: 'Voir nos realisations',
+    servicesEyebrow: 'Services',
+    servicesTitle: 'Une expertise complete pour concevoir des solutions fiables et differenciantes.',
+    servicesDescription:
+      'TechAgency accompagne chaque decision produit et technique : cadrage, design, developpement, integration, deploiement, securite et amelioration continue.',
+    servicesItems:
+      'Developpement d applications web|Portails, plateformes SaaS et interfaces metier performantes, securisees et faciles a utiliser.\nDeveloppement mobile|Experiences mobiles fluides pour Android et iOS, pensees pour vos clients et vos equipes terrain.\nLogiciels sur mesure|Logiciels concus autour de vos processus, regles metier, donnees et objectifs operationnels.\nSystemes de gestion|ERP, CRM, back-offices et systemes internes pour centraliser vos operations critiques.\nIntelligence artificielle|Chatbots, analyse de donnees, assistants intelligents et automatisation augmentee par l IA.\nAutomatisation des processus|Workflows robustes pour reduire les taches repetitives et fiabiliser les operations.\nCloud & DevOps|Architecture cloud, CI/CD, supervision et deploiements stables pour evoluer sereinement.\nCybersecurite|Protection des donnees, durcissement applicatif et pratiques de securite des la conception.',
+    servicesProofPoints:
+      'Architecture scalable et maintenable\nInterfaces sobres, rapides et orientees conversion\nDeploiement securise avec support continu',
+    solutionsEyebrow: 'Solutions',
+    solutionsTitle: 'Des produits digitaux concus pour resoudre de vrais problemes metier.',
+    solutionsDescription:
+      'Nous partons de vos flux operationnels pour creer des systemes precis : utiles des le premier jour, evolutifs sur le long terme et suffisamment clairs pour etre adoptes par vos equipes.',
+    solutionsItems:
+      'Gestion commerciale|Ventes, stocks, facturation, clients, paiements et tableaux de bord operationnels.\nGestion scolaire et universitaire|Inscriptions, etudiants, notes, emplois du temps, absences et administration.\nApplication de reservation|Disponibilites, planning, paiement, notifications et gestion des demandes.\nPlateforme e-commerce|Catalogue, panier, paiement, promotions, stock et back-office de pilotage.\nBI et reporting|KPI, dashboards, visualisation de donnees et rapports de decision.\nCRM / ERP personnalise|Suivi commercial, workflow interne, automatisation et gestion multi-roles.\nApplication mobile metier|Outils mobiles pour equipes terrain, clients, agents et partenaires.\nChatbot intelligent|Support client, qualification de demandes et reponses connectees aux donnees internes.',
+    processEyebrow: 'Processus',
+    processTitle: 'Une methode structuree pour livrer sans improvisation.',
+    processDescription:
+      'Nous combinons cadrage produit, rigueur technique et cycles courts pour garder le projet lisible, maitrise et oriente resultat.',
+    processItems:
+      'Analyse du besoin|Audit, objectifs, utilisateurs, contraintes, priorites metier et perimetre fonctionnel.\nConception UI/UX|Parcours, maquettes, experience utilisateur, structure des ecrans et validation du concept.\nDeveloppement|Architecture, developpement frontend/backend, integrations et gestion des donnees.\nTest et validation|Tests fonctionnels, securite, performance, correction des anomalies et recette client.\nDeploiement|Mise en production, cloud, CI/CD, configuration, sauvegardes et monitoring.\nAmelioration continue|Maintenance, support, nouvelles fonctionnalites et optimisation selon les retours terrain.',
     contactTitle: 'Donnez-nous le contexte, nous vous aidons a structurer la solution.',
     contactDescription:
       'Decrivez votre besoin, vos contraintes et vos objectifs. Nous vous repondons avec une premiere lecture technique claire et des prochaines etapes concretes.',
@@ -182,6 +354,10 @@ function AdminPanel({ standalone = false }) {
   });
   const ActiveIcon = tabs.find((tab) => tab.id === activeTab)?.icon || LayoutDashboard;
   const selectedSection = sections.find((section) => section.id === selectedSectionId) || sections[0];
+  const filteredLeads = (dashboardLeads.length > 0 ? dashboardLeads : leads).filter((lead) => leadFilter === 'all' || lead.status === leadFilter);
+  const selectedLead = filteredLeads.find((lead) => lead.id === selectedLeadId) || filteredLeads[0];
+  const newLeadCount = dashboardLeads.filter((lead) => lead.status === 'new').length;
+  const activeLeadCount = dashboardLeads.filter((lead) => ['new', 'open', 'in_progress', 'pending'].includes(lead.status)).length;
 
   useEffect(() => {
     let cancelled = false;
@@ -192,19 +368,26 @@ function AdminPanel({ standalone = false }) {
         if (!healthResponse.ok) throw new Error(`API indisponible (${healthResponse.status})`);
         if (!cancelled) setApiStatus('API connectee');
 
-        const authResponse = await fetch(apiUrl('/api/admin-me'), { credentials: 'include' });
+        const authResponse = await adminFetch('/api/admin-me');
         const auth = await authResponse.json();
         if (cancelled) return;
         setAdminAuthenticated(Boolean(auth.authenticated));
         setAuthLoading(false);
 
         if (!auth.authenticated) {
-          setDatabaseStatus('Authentification admin requise');
+          setDatabaseStatus('Connecte-toi pour charger MongoDB');
           return;
         }
 
-        const response = await fetch(apiUrl('/api/admin-config'), { credentials: 'include' });
-        if (!response.ok) throw new Error('API indisponible');
+        const response = await adminFetch('/api/admin-config');
+        if (!response.ok) {
+          if (response.status === 401) {
+            setAdminAuthenticated(false);
+            setDatabaseStatus('Connecte-toi pour charger MongoDB');
+            throw new Error('Session admin expiree');
+          }
+          throw new Error(`API indisponible (${response.status})`);
+        }
         const config = await response.json();
         if (cancelled) return;
 
@@ -213,6 +396,12 @@ function AdminPanel({ standalone = false }) {
         setProjects(config.projects || initialProjects);
         setSiteSettings((current) => ({ ...current, ...(config.settings || {}) }));
         setSelectedSectionId((config.sections || initialSections)[0]?.id || 0);
+        const dashboard = await loadDashboardData();
+        const leadsData = await loadLeadsData();
+        if (cancelled) return;
+        setDashboardStats({ ...initialDashboardStats, ...(dashboard.stats || {}) });
+        setDashboardLeads(leadsData.leads || dashboard.leads || []);
+        setSelectedLeadId((leadsData.leads || dashboard.leads || [])[0]?.id || '');
         setDatabaseStatus('MongoDB connecte');
       } catch (error) {
         if (cancelled) return;
@@ -231,14 +420,25 @@ function AdminPanel({ standalone = false }) {
   }, []);
 
   const loadConfigAfterLogin = async () => {
-    const response = await fetch(apiUrl('/api/admin-config'), { credentials: 'include' });
-    if (!response.ok) throw new Error('API indisponible');
+    const response = await adminFetch('/api/admin-config');
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Session admin expiree. Reconnecte-toi.');
+      }
+      throw new Error(`API indisponible (${response.status})`);
+    }
     const config = await response.json();
     setSections(config.sections || initialSections);
     setOffers(config.offers || initialOffers);
     setProjects(config.projects || initialProjects);
     setSiteSettings((current) => ({ ...current, ...(config.settings || {}) }));
     setSelectedSectionId((config.sections || initialSections)[0]?.id || 0);
+    const dashboard = await loadDashboardData();
+    const leadsData = await loadLeadsData();
+    setDashboardStats({ ...initialDashboardStats, ...(dashboard.stats || {}) });
+    setDashboardLeads(leadsData.leads || dashboard.leads || []);
+    setSelectedLeadId((leadsData.leads || dashboard.leads || [])[0]?.id || '');
+    setApiStatus('API connectee');
     setDatabaseStatus('MongoDB connecte');
   };
 
@@ -247,10 +447,9 @@ function AdminPanel({ standalone = false }) {
     setSavedMessage('');
 
     try {
-      const response = await fetch(apiUrl('/api/admin-login'), {
+      const response = await adminFetch('/api/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ email: adminEmail, password: adminPassword }),
       });
 
@@ -259,10 +458,13 @@ function AdminPanel({ standalone = false }) {
         throw new Error(error.message || 'Mot de passe incorrect');
       }
 
+      const loginData = await response.json();
+      setAdminToken(loginData.token);
+      await loadConfigAfterLogin();
       setAdminAuthenticated(true);
       setAdminEmail('');
       setAdminPassword('');
-      await loadConfigAfterLogin();
+      setSavedMessage('');
     } catch (error) {
       setSavedMessage(
         error.message === 'Failed to fetch'
@@ -277,23 +479,29 @@ function AdminPanel({ standalone = false }) {
     setSavedMessage('');
 
     try {
-      const response = await fetch(apiUrl('/api/admin-config'), {
+      const response = await adminFetch('/api/admin-config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ sections, offers, projects, settings: siteSettings }),
       });
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || 'Erreur sauvegarde MongoDB');
+        const message = error.message || 'Erreur sauvegarde';
+        const statusMessage =
+          response.status === 401 ? 'Session admin expiree - reconnecte-toi' : `Erreur API (${response.status})`;
+        throw new Error(`${statusMessage}: ${message}`);
       }
 
       setDatabaseStatus('MongoDB connecte');
       setSavedMessage('Modifications enregistrees dans MongoDB');
+      const dashboard = await loadDashboardData();
+      const leadsData = await loadLeadsData();
+      setDashboardStats({ ...initialDashboardStats, ...(dashboard.stats || {}) });
+      setDashboardLeads(leadsData.leads || dashboard.leads || []);
     } catch (error) {
       setSavedMessage(error.message);
-      setDatabaseStatus('Erreur de connexion MongoDB');
+      setDatabaseStatus(error.message.includes('Mongo') ? 'Erreur de connexion MongoDB' : 'API connectee - sauvegarde refusee');
     } finally {
       setIsSaving(false);
       window.setTimeout(() => setSavedMessage(''), 2600);
@@ -331,6 +539,19 @@ function AdminPanel({ standalone = false }) {
       if (selectedSectionId === id) {
         setSelectedSectionId(next[0]?.id || 0);
       }
+      return next;
+    });
+  };
+
+  const moveSection = (id, direction) => {
+    setSections((current) => {
+      const index = current.findIndex((section) => section.id === id);
+      const targetIndex = index + direction;
+      if (index < 0 || targetIndex < 0 || targetIndex >= current.length) return current;
+
+      const next = [...current];
+      const [section] = next.splice(index, 1);
+      next.splice(targetIndex, 0, section);
       return next;
     });
   };
@@ -394,8 +615,65 @@ function AdminPanel({ standalone = false }) {
     setProjects((current) => current.map((project) => (project.id === id ? { ...project, ...updates } : project)));
   };
 
+  const importProjectImage = async (id, file) => {
+    if (!file) return;
+    try {
+      const image = await imageFileToDataUrl(file);
+      updateProject(id, { image, imageName: file.name });
+      setSavedMessage('Image importee. Clique Enregistrer pour la sauvegarder dans MongoDB.');
+    } catch (error) {
+      setSavedMessage(error.message);
+    }
+  };
+
+  const importLogoImage = async (file) => {
+    if (!file) return;
+    try {
+      const logoImage = await imageFileToDataUrl(file);
+      updateSetting('logoImage', logoImage);
+      updateSetting('logoFileName', file.name);
+      setSavedMessage('Logo importe. Clique Enregistrer pour le sauvegarder dans MongoDB.');
+    } catch (error) {
+      setSavedMessage(error.message);
+    }
+  };
+
   const deleteProject = (id) => {
     setProjects((current) => current.filter((project) => project.id !== id));
+  };
+
+  const refreshLeads = async () => {
+    const [dashboard, leadsData] = await Promise.all([loadDashboardData(), loadLeadsData()]);
+    const nextLeads = leadsData.leads || dashboard.leads || [];
+    setDashboardStats({ ...initialDashboardStats, ...(dashboard.stats || {}) });
+    setDashboardLeads(nextLeads);
+    setSelectedLeadId((current) => (nextLeads.some((lead) => lead.id === current) ? current : nextLeads[0]?.id || ''));
+  };
+
+  const updateLeadStatus = async (id, status) => {
+    try {
+      const response = await adminFetch(`/api/admin-leads/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) throw new Error('Impossible de modifier le statut.');
+      await refreshLeads();
+      setSavedMessage('Statut de la demande mis a jour.');
+    } catch (error) {
+      setSavedMessage(error.message);
+    }
+  };
+
+  const deleteLead = async (id) => {
+    try {
+      const response = await adminFetch(`/api/admin-leads/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Impossible de supprimer la demande.');
+      await refreshLeads();
+      setSavedMessage('Demande supprimee.');
+    } catch (error) {
+      setSavedMessage(error.message);
+    }
   };
 
   if (authLoading) {
@@ -582,10 +860,10 @@ function AdminPanel({ standalone = false }) {
                 <div>
                   <div className="grid gap-4 md:grid-cols-4">
                     {[
-                      ['Demandes', '18', Users],
-                      ['Devis ouverts', '7', BriefcaseBusiness],
-                      ['Modeles actifs', '3', Sparkles],
-                      ['Taux reponse', '94%', Bell],
+                      ['Demandes', dashboardStats.requests, Users],
+                      ['Devis ouverts', dashboardStats.openQuotes, BriefcaseBusiness],
+                      ['Modeles actifs', dashboardStats.activeModels, Sparkles],
+                      ['Taux reponse', dashboardStats.responseRate, Bell],
                     ].map(([label, value, Icon]) => (
                       <div key={label} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                         <Icon size={21} className="text-cyan" />
@@ -599,7 +877,7 @@ function AdminPanel({ standalone = false }) {
                     <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                       <h3 className="text-lg font-extrabold text-navy">Pipeline commercial</h3>
                       <div className="mt-5 space-y-4">
-                        {leads.map((lead) => (
+                        {(dashboardLeads.length > 0 ? dashboardLeads : leads).map((lead) => (
                           <div key={lead.name} className="rounded-lg border border-slate-200 bg-cloud p-4">
                             <div className="flex items-center justify-between gap-3">
                               <div>
@@ -635,17 +913,146 @@ function AdminPanel({ standalone = false }) {
               )}
 
               {activeTab === 'leads' && (
-                <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                  <h3 className="text-xl font-extrabold text-navy">Demandes clients</h3>
-                  <div className="mt-5 overflow-hidden rounded-lg border border-slate-200">
-                    {leads.map((lead) => (
-                      <div key={lead.name} className="grid gap-3 border-b border-slate-200 p-4 last:border-b-0 md:grid-cols-4">
-                        <p className="font-extrabold text-navy">{lead.name}</p>
-                        <p className="text-sm font-semibold text-slate-600">{lead.type}</p>
-                        <p className="text-sm font-bold text-cyan">{lead.status}</p>
-                        <p className="text-sm font-semibold text-slate-500">{lead.value}</p>
+                <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+                  <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <h3 className="text-xl font-extrabold text-navy">Demandes clients</h3>
+                        <p className="mt-1 text-sm font-semibold text-slate-500">Suivi des messages envoyes depuis le formulaire du site.</p>
                       </div>
-                    ))}
+                      <button type="button" onClick={refreshLeads} className="secondary-button">
+                        <SlidersHorizontal size={17} />
+                        Actualiser
+                      </button>
+                    </div>
+
+                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                      {[
+                        ['Total', dashboardStats.requests, Users],
+                        ['Nouvelles', newLeadCount, Bell],
+                        ['Actives', activeLeadCount, BriefcaseBusiness],
+                      ].map(([label, value, Icon]) => (
+                        <div key={label} className="rounded-lg border border-slate-200 bg-cloud p-4">
+                          <Icon size={19} className="text-cyan" />
+                          <p className="mt-3 text-2xl font-extrabold text-navy">{value}</p>
+                          <p className="text-xs font-extrabold uppercase text-slate-500">{label}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {[{ value: 'all', label: 'Toutes' }, ...leadStatuses].map((status) => (
+                        <button
+                          key={status.value}
+                          type="button"
+                          onClick={() => setLeadFilter(status.value)}
+                          className={`rounded-md px-3 py-2 text-xs font-extrabold transition ${
+                            leadFilter === status.value ? 'bg-navy text-white' : 'bg-cloud text-slate-600 hover:bg-cyan/10 hover:text-cyan'
+                          }`}
+                        >
+                          {status.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mt-5 space-y-3">
+                      {filteredLeads.map((lead) => (
+                        <button
+                          key={lead.id || lead.name}
+                          type="button"
+                          onClick={() => setSelectedLeadId(lead.id)}
+                          className={`w-full rounded-lg border p-4 text-left transition ${
+                            selectedLead?.id === lead.id ? 'border-cyan bg-navy text-white' : 'border-slate-200 bg-cloud text-navy hover:border-cyan'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate font-extrabold">{lead.name}</p>
+                              <p className={`mt-1 text-sm font-semibold ${selectedLead?.id === lead.id ? 'text-slate-300' : 'text-slate-500'}`}>
+                                {lead.type}
+                              </p>
+                            </div>
+                            <span className="rounded-md bg-cyan/10 px-3 py-1 text-xs font-extrabold text-cyan">
+                              {getStatusLabel(lead.status)}
+                            </span>
+                          </div>
+                          <div className={`mt-3 grid gap-2 text-xs font-semibold ${selectedLead?.id === lead.id ? 'text-slate-300' : 'text-slate-500'} sm:grid-cols-2`}>
+                            <span className="flex items-center gap-2"><Mail size={14} />{lead.email || 'Email absent'}</span>
+                            <span className="flex items-center gap-2"><CalendarDays size={14} />{lead.value || 'Date absente'}</span>
+                          </div>
+                        </button>
+                      ))}
+                      {filteredLeads.length === 0 && (
+                        <div className="rounded-lg border border-dashed border-slate-300 bg-cloud p-6 text-center">
+                          <p className="font-extrabold text-navy">Aucune demande pour ce filtre.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                    {selectedLead ? (
+                      <>
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <span className="eyebrow">Fiche demande</span>
+                            <h3 className="mt-3 text-2xl font-extrabold text-navy">{selectedLead.name}</h3>
+                            <p className="mt-2 text-sm font-semibold text-slate-500">{selectedLead.type}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => deleteLead(selectedLead.id)}
+                            className="flex h-11 w-11 items-center justify-center rounded-lg border border-red-200 text-red-500 transition hover:bg-red-50"
+                            aria-label="Supprimer la demande"
+                          >
+                            <Trash2 size={19} />
+                          </button>
+                        </div>
+
+                        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                          <a href={`mailto:${selectedLead.email}`} className="rounded-lg border border-slate-200 bg-cloud p-4 transition hover:border-cyan">
+                            <Mail size={20} className="text-cyan" />
+                            <p className="mt-3 text-xs font-extrabold uppercase text-slate-500">Email</p>
+                            <p className="mt-1 break-all text-sm font-bold text-navy">{selectedLead.email || 'Non renseigne'}</p>
+                          </a>
+                          <a href={selectedLead.phone ? `tel:${selectedLead.phone}` : undefined} className="rounded-lg border border-slate-200 bg-cloud p-4 transition hover:border-cyan">
+                            <Phone size={20} className="text-cyan" />
+                            <p className="mt-3 text-xs font-extrabold uppercase text-slate-500">Telephone</p>
+                            <p className="mt-1 text-sm font-bold text-navy">{selectedLead.phone || 'Non renseigne'}</p>
+                          </a>
+                        </div>
+
+                        <label className="mt-5 block">
+                          <span className="text-xs font-extrabold uppercase text-slate-500">Statut de traitement</span>
+                          <select
+                            value={selectedLead.status || 'new'}
+                            onChange={(event) => updateLeadStatus(selectedLead.id, event.target.value)}
+                            className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-navy outline-none transition focus:border-cyan focus:ring-4 focus:ring-cyan/10"
+                          >
+                            {leadStatuses.map((status) => (
+                              <option key={status.value} value={status.value}>{status.label}</option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <div className="mt-5 rounded-lg border border-slate-200 bg-cloud p-5">
+                          <div className="flex items-center gap-3">
+                            <MessageSquareText size={21} className="text-cyan" />
+                            <h4 className="font-extrabold text-navy">Message client</h4>
+                          </div>
+                          <p className="mt-4 whitespace-pre-wrap text-sm font-semibold leading-7 text-slate-700">
+                            {selectedLead.message || 'Aucun message detaille.'}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex min-h-[360px] items-center justify-center rounded-lg border border-dashed border-slate-300 bg-cloud p-6 text-center">
+                        <div>
+                          <UserRound size={34} className="mx-auto text-cyan" />
+                          <p className="mt-4 font-extrabold text-navy">Selectionne une demande.</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -711,9 +1118,27 @@ function AdminPanel({ standalone = false }) {
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <h3 className="text-xl font-extrabold text-navy">Modifier la section</h3>
-                            <p className="mt-1 text-sm font-semibold text-slate-500">Toutes les parties sont modifiables dans ce prototype.</p>
+                            <p className="mt-1 text-sm font-semibold text-slate-500">
+                              L'ordre et la visibilite pilotent le site public et la navbar.
+                            </p>
                           </div>
                           <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => moveSection(selectedSection.id, -1)}
+                              className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 text-navy transition hover:border-cyan hover:text-cyan"
+                              aria-label="Monter la section"
+                            >
+                              <ChevronUp size={20} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveSection(selectedSection.id, 1)}
+                              className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 text-navy transition hover:border-cyan hover:text-cyan"
+                              aria-label="Descendre la section"
+                            >
+                              <ChevronDown size={20} />
+                            </button>
                             <button
                               type="button"
                               onClick={() => updateSection(selectedSection.id, { visible: !selectedSection.visible })}
@@ -795,8 +1220,8 @@ function AdminPanel({ standalone = false }) {
 
                         <div className="mt-6 rounded-lg border border-cyan/20 bg-cyan/10 p-4">
                           <p className="text-sm font-bold leading-7 text-navy">
-                            Pour rendre ces modifications persistantes, il faudra connecter ce panneau a une base de donnees
-                            ou a un CMS. L'interface est deja structuree pour ca.
+                            Ces modifications sont persistantes apres Enregistrer: le contenu est stocke dans MongoDB et
+                            recharge par le site public.
                           </p>
                         </div>
                       </>
@@ -852,6 +1277,18 @@ function AdminPanel({ standalone = false }) {
                               label="Statut"
                               value={offer.status}
                               onChange={(value) => updateOffer(offer.id, { status: value })}
+                            />
+                            <EditableTextarea
+                              label="Description"
+                              value={offer.description || ''}
+                              onChange={(value) => updateOffer(offer.id, { description: value })}
+                              rows={3}
+                            />
+                            <EditableTextarea
+                              label="Fonctionnalites - une ligne par point"
+                              value={offer.featuresText || (Array.isArray(offer.features) ? offer.features.join('\n') : '')}
+                              onChange={(value) => updateOffer(offer.id, { featuresText: value })}
+                              rows={5}
                             />
                           </div>
                           <button
@@ -937,11 +1374,37 @@ function AdminPanel({ standalone = false }) {
                             value={project.url}
                             onChange={(value) => updateProject(project.id, { url: value })}
                           />
-                          <EditableInput
-                            label="Image"
-                            value={project.image}
-                            onChange={(value) => updateProject(project.id, { image: value })}
-                          />
+                        </div>
+
+                        <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
+                          <div className="grid gap-4 md:grid-cols-[10rem_1fr] md:items-center">
+                            <div className="overflow-hidden rounded-lg border border-slate-200 bg-cloud">
+                              {project.image ? (
+                                <img src={project.image} alt={project.title} className="h-28 w-full object-cover" />
+                              ) : (
+                                <div className="flex h-28 items-center justify-center text-xs font-extrabold uppercase text-slate-400">
+                                  Aucune image
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <span className="text-xs font-extrabold uppercase text-slate-500">Image du projet</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(event) => importProjectImage(project.id, event.target.files?.[0])}
+                                className="mt-2 block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-navy file:mr-4 file:rounded-md file:border-0 file:bg-cyan/10 file:px-3 file:py-2 file:text-xs file:font-extrabold file:text-cyan"
+                              />
+                              <p className="mt-2 text-xs font-semibold text-slate-500">
+                                L'image est optimisee puis stockee dans MongoDB apres Enregistrer.
+                              </p>
+                              <EditableInput
+                                label="URL image optionnelle"
+                                value={project.image?.startsWith('data:') ? project.imageName || 'Image importee dans MongoDB' : project.image || ''}
+                                onChange={(value) => updateProject(project.id, { image: value, imageName: '' })}
+                              />
+                            </div>
+                          </div>
                         </div>
 
                         <label className="mt-4 block">
@@ -972,15 +1435,50 @@ function AdminPanel({ standalone = false }) {
               {activeTab === 'brand' && (
                 <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
                   <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                    <LogoMark className="h-20 w-20 rounded-lg shadow-sm" />
+                    <LogoMark src={siteSettings.logoImage} className="h-20 w-20 rounded-lg shadow-sm" />
                     <h3 className="mt-5 text-xl font-extrabold text-navy">Logo TechAgency</h3>
                     <p className="mt-3 text-sm leading-7 text-slate-600">
-                      Logo vectoriel disponible pour site web, cartes de visite, presentations et documents commerciaux.
+                      Le logo est sauvegarde dans MongoDB et utilise automatiquement sur le site public.
                     </p>
-                    <a href="/techagency-logo.svg" download className="primary-button mt-5">
-                      <Download size={17} />
-                      Telecharger
-                    </a>
+                    <label className="mt-5 block">
+                      <span className="text-xs font-extrabold uppercase text-slate-500">Importer un nouveau logo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => importLogoImage(event.target.files?.[0])}
+                        className="mt-2 block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-navy file:mr-4 file:rounded-md file:border-0 file:bg-cyan/10 file:px-3 file:py-2 file:text-xs file:font-extrabold file:text-cyan"
+                      />
+                    </label>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <a
+                        href={siteSettings.logoImage || '/techagency-logo.svg'}
+                        download={siteSettings.logoFileName || 'techagency-logo.svg'}
+                        className="primary-button"
+                      >
+                        <Download size={17} />
+                        Telecharger
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateSetting('logoImage', '');
+                          updateSetting('logoFileName', 'techagency-logo.svg');
+                        }}
+                        className="secondary-button"
+                      >
+                        Logo par defaut
+                      </button>
+                    </div>
+                    <EditableInput
+                      label="Nom du fichier logo"
+                      value={siteSettings.logoFileName || ''}
+                      onChange={(value) => updateSetting('logoFileName', value)}
+                    />
+                    <EditableInput
+                      label="URL logo optionnelle"
+                      value={siteSettings.logoImage?.startsWith('data:') ? 'Logo importe dans MongoDB' : siteSettings.logoImage || ''}
+                      onChange={(value) => updateSetting('logoImage', value)}
+                    />
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                     <h3 className="text-xl font-extrabold text-navy">Identite visuelle</h3>
@@ -1030,6 +1528,16 @@ function AdminPanel({ standalone = false }) {
                         value={siteSettings.domain}
                         onChange={(value) => updateSetting('domain', value)}
                       />
+                      <EditableInput
+                        label="Modeles actifs dashboard"
+                        value={siteSettings.dashboardModelsActive || ''}
+                        onChange={(value) => updateSetting('dashboardModelsActive', value)}
+                      />
+                      <EditableInput
+                        label="Taux reponse dashboard"
+                        value={siteSettings.dashboardResponseRate || ''}
+                        onChange={(value) => updateSetting('dashboardResponseRate', value)}
+                      />
                     </div>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
@@ -1064,6 +1572,250 @@ function AdminPanel({ standalone = false }) {
                         label="CTA secondaire"
                         value={siteSettings.heroSecondaryCta}
                         onChange={(value) => updateSetting('heroSecondaryCta', value)}
+                      />
+                      <EditableInput
+                        label="Badge Services"
+                        value={siteSettings.servicesEyebrow}
+                        onChange={(value) => updateSetting('servicesEyebrow', value)}
+                      />
+                      <EditableTextarea
+                        label="Titre Services"
+                        value={siteSettings.servicesTitle}
+                        onChange={(value) => updateSetting('servicesTitle', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Description Services"
+                        value={siteSettings.servicesDescription}
+                        onChange={(value) => updateSetting('servicesDescription', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Cartes Services - format Titre|Description"
+                        value={siteSettings.servicesItems}
+                        onChange={(value) => updateSetting('servicesItems', value)}
+                        rows={8}
+                      />
+                      <EditableTextarea
+                        label="Preuves Services - une ligne par point"
+                        value={siteSettings.servicesProofPoints}
+                        onChange={(value) => updateSetting('servicesProofPoints', value)}
+                        rows={4}
+                      />
+                      <EditableInput
+                        label="Badge Solutions"
+                        value={siteSettings.solutionsEyebrow}
+                        onChange={(value) => updateSetting('solutionsEyebrow', value)}
+                      />
+                      <EditableTextarea
+                        label="Titre Solutions"
+                        value={siteSettings.solutionsTitle}
+                        onChange={(value) => updateSetting('solutionsTitle', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Description Solutions"
+                        value={siteSettings.solutionsDescription}
+                        onChange={(value) => updateSetting('solutionsDescription', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Cartes Solutions - format Titre|Description"
+                        value={siteSettings.solutionsItems}
+                        onChange={(value) => updateSetting('solutionsItems', value)}
+                        rows={8}
+                      />
+                      <EditableInput
+                        label="Badge Processus"
+                        value={siteSettings.processEyebrow}
+                        onChange={(value) => updateSetting('processEyebrow', value)}
+                      />
+                      <EditableTextarea
+                        label="Titre Processus"
+                        value={siteSettings.processTitle}
+                        onChange={(value) => updateSetting('processTitle', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Description Processus"
+                        value={siteSettings.processDescription}
+                        onChange={(value) => updateSetting('processDescription', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Etapes Processus - format Titre|Description"
+                        value={siteSettings.processItems || ''}
+                        onChange={(value) => updateSetting('processItems', value)}
+                        rows={7}
+                      />
+                      <EditableTextarea
+                        label="Liens navigation - format Label|#ancre"
+                        value={siteSettings.navLinks || siteSettings.footerQuickLinks || ''}
+                        onChange={(value) => updateSetting('navLinks', value)}
+                        rows={6}
+                      />
+                      <EditableInput
+                        label="Badge Pour qui"
+                        value={siteSettings.audiencesEyebrow || ''}
+                        onChange={(value) => updateSetting('audiencesEyebrow', value)}
+                      />
+                      <EditableTextarea
+                        label="Titre Pour qui"
+                        value={siteSettings.audiencesTitle || ''}
+                        onChange={(value) => updateSetting('audiencesTitle', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Description Pour qui"
+                        value={siteSettings.audiencesDescription || ''}
+                        onChange={(value) => updateSetting('audiencesDescription', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Audiences - format Nom|URL image optionnelle"
+                        value={siteSettings.audiencesItems || ''}
+                        onChange={(value) => updateSetting('audiencesItems', value)}
+                        rows={6}
+                      />
+                      <EditableInput
+                        label="Texte cartes mobile Pour qui"
+                        value={siteSettings.audiencesCardText || ''}
+                        onChange={(value) => updateSetting('audiencesCardText', value)}
+                      />
+                      <EditableInput
+                        label="Phrase finale Pour qui"
+                        value={siteSettings.audiencesBottomText || ''}
+                        onChange={(value) => updateSetting('audiencesBottomText', value)}
+                      />
+                      <EditableInput
+                        label="Badge Technologies"
+                        value={siteSettings.technologiesEyebrow || ''}
+                        onChange={(value) => updateSetting('technologiesEyebrow', value)}
+                      />
+                      <EditableTextarea
+                        label="Titre Technologies"
+                        value={siteSettings.technologiesTitle || ''}
+                        onChange={(value) => updateSetting('technologiesTitle', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Description Technologies"
+                        value={siteSettings.technologiesDescription || ''}
+                        onChange={(value) => updateSetting('technologiesDescription', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Groupes technologies - format Groupe|Item, Item"
+                        value={siteSettings.technologiesGroups || ''}
+                        onChange={(value) => updateSetting('technologiesGroups', value)}
+                        rows={5}
+                      />
+                      <EditableInput
+                        label="Badge A propos"
+                        value={siteSettings.aboutEyebrow || ''}
+                        onChange={(value) => updateSetting('aboutEyebrow', value)}
+                      />
+                      <EditableTextarea
+                        label="Titre A propos"
+                        value={siteSettings.aboutTitle || ''}
+                        onChange={(value) => updateSetting('aboutTitle', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Description A propos"
+                        value={siteSettings.aboutDescription || ''}
+                        onChange={(value) => updateSetting('aboutDescription', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Texte secondaire A propos"
+                        value={siteSettings.aboutSecondaryText || ''}
+                        onChange={(value) => updateSetting('aboutSecondaryText', value)}
+                        rows={3}
+                      />
+                      <EditableInput
+                        label="Image A propos"
+                        value={siteSettings.aboutImage || ''}
+                        onChange={(value) => updateSetting('aboutImage', value)}
+                      />
+                      <EditableTextarea
+                        label="Statistiques A propos - format Valeur|Texte"
+                        value={siteSettings.aboutStats || ''}
+                        onChange={(value) => updateSetting('aboutStats', value)}
+                        rows={4}
+                      />
+                      <EditableInput
+                        label="Badge Pourquoi nous choisir"
+                        value={siteSettings.chooseEyebrow || ''}
+                        onChange={(value) => updateSetting('chooseEyebrow', value)}
+                      />
+                      <EditableTextarea
+                        label="Titre Pourquoi nous choisir"
+                        value={siteSettings.chooseTitle || ''}
+                        onChange={(value) => updateSetting('chooseTitle', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Description Pourquoi nous choisir"
+                        value={siteSettings.chooseDescription || ''}
+                        onChange={(value) => updateSetting('chooseDescription', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Avantages - une ligne par avantage"
+                        value={siteSettings.chooseItems || ''}
+                        onChange={(value) => updateSetting('chooseItems', value)}
+                        rows={7}
+                      />
+                      <EditableInput
+                        label="Badge Temoignages"
+                        value={siteSettings.testimonialsEyebrow || ''}
+                        onChange={(value) => updateSetting('testimonialsEyebrow', value)}
+                      />
+                      <EditableTextarea
+                        label="Titre Temoignages"
+                        value={siteSettings.testimonialsTitle || ''}
+                        onChange={(value) => updateSetting('testimonialsTitle', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Description Temoignages"
+                        value={siteSettings.testimonialsDescription || ''}
+                        onChange={(value) => updateSetting('testimonialsDescription', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Avis - format Nom|Role|Societe|Texte"
+                        value={siteSettings.testimonialsItems || ''}
+                        onChange={(value) => updateSetting('testimonialsItems', value)}
+                        rows={6}
+                      />
+                      <EditableInput
+                        label="Badge avis"
+                        value={siteSettings.testimonialsBadge || ''}
+                        onChange={(value) => updateSetting('testimonialsBadge', value)}
+                      />
+                      <EditableInput
+                        label="Badge Offres"
+                        value={siteSettings.pricingEyebrow || ''}
+                        onChange={(value) => updateSetting('pricingEyebrow', value)}
+                      />
+                      <EditableTextarea
+                        label="Titre Offres"
+                        value={siteSettings.pricingTitle || ''}
+                        onChange={(value) => updateSetting('pricingTitle', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Description Offres"
+                        value={siteSettings.pricingDescription || ''}
+                        onChange={(value) => updateSetting('pricingDescription', value)}
+                        rows={3}
+                      />
+                      <EditableInput
+                        label="CTA Offres"
+                        value={siteSettings.pricingCta || ''}
+                        onChange={(value) => updateSetting('pricingCta', value)}
                       />
                       <EditableInput
                         label="Email contact"

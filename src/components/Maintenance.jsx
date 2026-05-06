@@ -12,7 +12,7 @@ function Maintenance({ settings }) {
       <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-navy/10 blur-3xl" />
 
       <section className="relative mx-auto max-w-2xl rounded-lg border border-slate-200 bg-white p-6 text-center shadow-premium sm:p-10">
-        <LogoMark className="mx-auto h-16 w-16 rounded-lg shadow-soft" />
+        <LogoMark src={settings?.logoImage} className="mx-auto h-16 w-16 rounded-lg shadow-soft" />
         <span className="mt-6 inline-flex items-center gap-2 rounded-md border border-cyan/25 bg-cyan/10 px-3 py-1 text-xs font-extrabold uppercase text-cyan">
           <Wrench size={14} />
           Maintenance en cours

@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import cors from 'cors';
 import crypto from 'node:crypto';
 import express from 'express';
+import { ObjectId } from 'mongodb';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getDb } from './db.js';
@@ -53,7 +54,10 @@ function isValidAdminToken(token) {
 }
 
 function requireAdmin(request, response, next) {
-  const token = parseCookies(request.headers.cookie)[cookieName];
+  const bearerToken = request.headers.authorization?.startsWith('Bearer ')
+    ? request.headers.authorization.slice('Bearer '.length)
+    : '';
+  const token = bearerToken || parseCookies(request.headers.cookie)[cookieName];
   if (!isValidAdminToken(token)) {
     response.status(401).json({ message: 'Authentification admin requise.' });
     return;
@@ -61,7 +65,7 @@ function requireAdmin(request, response, next) {
   next();
 }
 
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '8mb' }));
 app.use(
   cors({
     credentials: true,
@@ -97,14 +101,15 @@ app.post('/api/admin-login', async (request, response) => {
     await collection.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } });
 
     const secure = process.env.NODE_ENV === 'production';
-    response.cookie(cookieName, createAdminToken(String(user._id)), {
+    const adminToken = createAdminToken(String(user._id));
+    response.cookie(cookieName, adminToken, {
       httpOnly: true,
       secure,
       sameSite: secure ? 'none' : 'lax',
       maxAge: 1000 * 60 * 60 * 12,
       path: '/',
     });
-    response.json({ ok: true, user: { email: user.email, name: user.name } });
+    response.json({ ok: true, token: adminToken, user: { email: user.email, name: user.name } });
   } catch (error) {
     response.status(500).json({ message: 'Erreur authentification admin.', detail: error.message });
   }
@@ -116,7 +121,10 @@ app.post('/api/admin-logout', (_request, response) => {
 });
 
 app.get('/api/admin-me', (request, response) => {
-  const token = parseCookies(request.headers.cookie)[cookieName];
+  const bearerToken = request.headers.authorization?.startsWith('Bearer ')
+    ? request.headers.authorization.slice('Bearer '.length)
+    : '';
+  const token = bearerToken || parseCookies(request.headers.cookie)[cookieName];
   response.json({ authenticated: isValidAdminToken(token) });
 });
 
@@ -128,6 +136,75 @@ async function getConfigCollection() {
 async function getAdminUsersCollection() {
   const db = await getDb();
   return db.collection('admin_users');
+}
+
+function normalizeSections(sections = []) {
+  const savedSections = Array.isArray(sections) ? sections : [];
+  const getSectionKeys = (section) => {
+    const haystack = `${section.title || ''} ${section.type || ''}`.toLowerCase();
+
+    if (haystack.includes('services et solutions') || haystack.includes('cards')) {
+      return ['services', 'solutions'];
+    }
+    if (haystack.includes('temoignages et offres') || haystack.includes('conversion')) {
+      return ['testimonials', 'pricing'];
+    }
+    if (haystack.includes('hero')) return ['hero'];
+    if (haystack.includes('modele')) return ['modeles'];
+    if (haystack.includes('portfolio') || haystack.includes('projet')) return ['portfolio'];
+    if (haystack.includes('service')) return ['services'];
+    if (haystack.includes('pour qui') || haystack.includes('audience')) return ['audiences'];
+    if (haystack.includes('solution')) return ['solutions'];
+    if (haystack.includes('process')) return ['process'];
+    if (haystack.includes('technologie')) return ['technologies'];
+    if (haystack.includes('apropos') || haystack.includes('a propos')) return ['about'];
+    if (haystack.includes('temoignage')) return ['testimonials'];
+    if (haystack.includes('offre')) return ['pricing'];
+    if (haystack.includes('contact')) return ['contact'];
+    return [];
+  };
+
+  const getDefaultKey = (section) => getSectionKeys(section)[0] || '';
+  const savedByKey = new Map();
+  const savedOrder = [];
+  const customSections = [];
+
+  savedSections.forEach((section) => {
+    const keys = getSectionKeys(section);
+    if (keys.length === 0) {
+      customSections.push(section);
+      return;
+    }
+
+    keys.forEach((key) => {
+      const existing = savedByKey.get(key);
+      const priority = keys.length === 1 ? 2 : 1;
+      if (!existing || priority >= existing.priority) {
+        savedByKey.set(key, { section, priority, fromCombined: keys.length > 1 });
+      }
+      if (!savedOrder.includes(key)) savedOrder.push(key);
+    });
+  });
+
+  const canonicalByKey = new Map(defaultAdminConfig.sections.map((section) => [getDefaultKey(section), section]));
+  const orderedKeys = [
+    ...savedOrder.filter((key) => canonicalByKey.has(key)),
+    ...defaultAdminConfig.sections.map(getDefaultKey).filter((key) => key && !savedOrder.includes(key)),
+  ];
+
+  const canonicalSections = orderedKeys.map((key) => {
+    const defaultSection = canonicalByKey.get(key);
+    const saved = savedByKey.get(key);
+    if (!saved) return defaultSection;
+
+    return {
+      ...defaultSection,
+      visible: saved.section.visible !== false,
+      blocks: saved.fromCombined ? defaultSection.blocks : saved.section.blocks || defaultSection.blocks,
+    };
+  });
+
+  return [...canonicalSections, ...customSections];
 }
 
 async function ensureDefaultAdminUser() {
@@ -177,13 +254,119 @@ app.get('/api/admin-config', requireAdmin, async (_request, response) => {
 
     response.json({
       ...savedConfig,
-      sections: savedConfig.sections || defaultAdminConfig.sections,
+      sections: normalizeSections(savedConfig.sections),
       offers: savedConfig.offers || defaultAdminConfig.offers,
       projects: savedConfig.projects || defaultAdminConfig.projects,
       settings: { ...defaultAdminConfig.settings, ...(savedConfig.settings || {}) },
     });
   } catch (error) {
     response.status(500).json({ message: 'Impossible de charger la configuration admin.', detail: error.message });
+  }
+});
+
+app.get('/api/admin-dashboard', requireAdmin, async (_request, response) => {
+  try {
+    const db = await getDb();
+    const configCollection = await getConfigCollection();
+    const savedConfig = await configCollection.findOne({ key: configKey }, { projection: { _id: 0 } });
+    const settings = { ...defaultAdminConfig.settings, ...(savedConfig?.settings || {}) };
+    const requestsCollection = db.collection('contact_requests');
+    const totalRequests = await requestsCollection.countDocuments();
+    const openRequests = await requestsCollection.countDocuments({
+      status: { $in: ['new', 'open', 'in_progress', 'pending'] },
+    });
+    const recentRequests = await requestsCollection
+      .find({}, { projection: { name: 1, email: 1, phone: 1, projectType: 1, status: 1, message: 1, createdAt: 1 } })
+      .sort({ createdAt: -1 })
+      .limit(6)
+      .toArray();
+
+    response.json({
+      stats: {
+        requests: totalRequests,
+        openQuotes: openRequests,
+        activeModels: settings.dashboardModelsActive || '3',
+        responseRate: settings.dashboardResponseRate || '94%',
+      },
+      leads: recentRequests.map((lead) => ({
+        id: String(lead._id),
+        name: lead.name || 'Demande sans nom',
+        email: lead.email || '',
+        phone: lead.phone || '',
+        type: lead.projectType || 'Projet digital',
+        status: lead.status || 'new',
+        value: lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('fr-FR') : 'Nouvelle demande',
+        message: lead.message || '',
+      })),
+    });
+  } catch (error) {
+    response.status(500).json({ message: 'Impossible de charger le dashboard admin.', detail: error.message });
+  }
+});
+
+app.get('/api/admin-leads', requireAdmin, async (_request, response) => {
+  try {
+    const db = await getDb();
+    const leads = await db
+      .collection('contact_requests')
+      .find({}, { projection: { name: 1, email: 1, phone: 1, projectType: 1, message: 1, status: 1, recipient: 1, createdAt: 1 } })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    response.json({
+      leads: leads.map((lead) => ({
+        id: String(lead._id),
+        name: lead.name || 'Demande sans nom',
+        email: lead.email || '',
+        phone: lead.phone || '',
+        type: lead.projectType || 'Projet digital',
+        message: lead.message || '',
+        status: lead.status || 'new',
+        recipient: lead.recipient || '',
+        value: lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('fr-FR') : '',
+        createdAt: lead.createdAt || null,
+      })),
+    });
+  } catch (error) {
+    response.status(500).json({ message: 'Impossible de charger les demandes.', detail: error.message });
+  }
+});
+
+app.patch('/api/admin-leads/:id', requireAdmin, async (request, response) => {
+  try {
+    const { id } = request.params;
+    const { status } = request.body || {};
+    const allowedStatuses = ['new', 'open', 'in_progress', 'pending', 'answered', 'closed', 'archived'];
+
+    if (!ObjectId.isValid(id) || !allowedStatuses.includes(status)) {
+      response.status(400).json({ message: 'Demande ou statut invalide.' });
+      return;
+    }
+
+    const db = await getDb();
+    await db.collection('contact_requests').updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { status, updatedAt: new Date() } },
+    );
+    response.json({ ok: true });
+  } catch (error) {
+    response.status(500).json({ message: 'Impossible de modifier la demande.', detail: error.message });
+  }
+});
+
+app.delete('/api/admin-leads/:id', requireAdmin, async (request, response) => {
+  try {
+    const { id } = request.params;
+    if (!ObjectId.isValid(id)) {
+      response.status(400).json({ message: 'Demande invalide.' });
+      return;
+    }
+
+    const db = await getDb();
+    await db.collection('contact_requests').deleteOne({ _id: new ObjectId(id) });
+    response.json({ ok: true });
+  } catch (error) {
+    response.status(500).json({ message: 'Impossible de supprimer la demande.', detail: error.message });
   }
 });
 
@@ -194,7 +377,7 @@ app.get('/api/public-content', async (_request, response) => {
     const projects = savedConfig?.projects || defaultAdminConfig.projects;
 
     response.json({
-      sections: savedConfig?.sections || defaultAdminConfig.sections,
+      sections: normalizeSections(savedConfig?.sections),
       offers: savedConfig?.offers || defaultAdminConfig.offers,
       projects: projects.filter((project) => project.visible !== false),
       settings: { ...defaultAdminConfig.settings, ...(savedConfig?.settings || {}) },

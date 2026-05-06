@@ -1,4 +1,4 @@
-import { Download, Github, Instagram, Linkedin, Twitter } from 'lucide-react';
+import { Github, Instagram, Linkedin, Twitter } from 'lucide-react';
 import LogoMark from './LogoMark.jsx';
 
 const defaultQuickLinks = [
@@ -53,21 +53,13 @@ function Footer({ settings }) {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.25fr_0.8fr_0.8fr_0.7fr]">
           <div>
             <a href="#accueil" className="flex items-center gap-3">
-              <LogoMark className="h-10 w-10 rounded-lg" />
+              <LogoMark src={settings?.logoImage} className="h-10 w-10 rounded-lg" />
               <span>
                 <span className="block text-xl font-extrabold">{agencyName}</span>
                 <span className="text-xs font-bold uppercase text-slate-400">{tagline}</span>
               </span>
             </a>
             <p className="mt-5 max-w-sm text-sm leading-7 text-slate-300">{footerDescription}</p>
-            <a
-              href="/techagency-logo.svg"
-              download
-              className="mt-5 inline-flex items-center gap-2 rounded-lg border border-cyan/40 bg-cyan/10 px-4 py-3 text-sm font-extrabold text-cyan transition hover:bg-cyan hover:text-navy"
-            >
-              <Download size={17} />
-              Telecharger le logo HD
-            </a>
           </div>
 
           <div>

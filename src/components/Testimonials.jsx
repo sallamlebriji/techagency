@@ -1,47 +1,41 @@
 import { motion } from 'framer-motion';
 import { Quote } from 'lucide-react';
 
-const testimonials = [
-  {
-    name: 'Amine El Fassi',
-    role: 'Directeur général',
-    company: 'Atlas Retail',
-    quote:
-      'TechAgency a transformé notre gestion commerciale avec une plateforme claire, rapide et parfaitement adaptée à nos équipes.',
-  },
-  {
-    name: 'Sara Benali',
-    role: 'Responsable opérations',
-    company: 'MedBooking',
-    quote:
-      'L’accompagnement a été très professionnel, de la conception UI/UX au déploiement. Nous avons gagné en efficacité dès les premières semaines.',
-  },
-  {
-    name: 'Youssef Rahmani',
-    role: 'Fondateur',
-    company: 'SmartSupport AI',
-    quote:
-      'Ils ont livré un chatbot IA connecté à nos données internes avec une excellente qualité technique et une vraie vision produit.',
-  },
+const defaultTestimonials = [
+  'Amine El Fassi|Directeur general|Atlas Retail|TechAgency a transforme notre gestion commerciale avec une plateforme claire, rapide et parfaitement adaptee a nos equipes.',
+  'Sara Benali|Responsable operations|MedBooking|L accompagnement a ete tres professionnel, de la conception UI/UX au deploiement.',
+  'Youssef Rahmani|Fondateur|SmartSupport AI|Ils ont livre un chatbot IA connecte a nos donnees internes avec une excellente qualite technique.',
 ];
 
-function Testimonials() {
+function parseTestimonials(value) {
+  const lines = String(value || defaultTestimonials.join('\n')).split('\n').map((item) => item.trim()).filter(Boolean);
+  return lines.map((line) => {
+    const [name, role, company, ...quoteParts] = line.split('|').map((part) => part.trim());
+    return { name, role, company, quote: quoteParts.join(' | ') };
+  });
+}
+
+function Testimonials({ settings = {} }) {
+  const testimonials = parseTestimonials(settings.testimonialsItems);
+
   return (
-    <section className="section-padding bg-white">
+    <section id="temoignages" className="section-padding bg-white">
       <div className="container-shell">
         <div className="mx-auto max-w-3xl text-center">
-          <span className="eyebrow">Témoignages</span>
-          <h2 className="section-title mx-auto">Des clients qui choisissent la clarté, la vitesse et la qualité.</h2>
+          <span className="eyebrow">{settings.testimonialsEyebrow || 'Temoignages'}</span>
+          <h2 className="section-title mx-auto">
+            {settings.testimonialsTitle || 'Des clients qui choisissent la clarte, la vitesse et la qualite.'}
+          </h2>
           <p className="section-subtitle mx-auto">
-            Nous privilégions une relation transparente : des décisions expliquées, des livrables visibles et un
-            accompagnement sérieux après mise en production.
+            {settings.testimonialsDescription ||
+              'Nous privilegions une relation transparente : des decisions expliquees, des livrables visibles et un accompagnement serieux apres mise en production.'}
           </p>
         </div>
 
         <div className="mt-12 grid gap-5 lg:grid-cols-3">
           {testimonials.map((testimonial, index) => (
             <motion.article
-              key={testimonial.name}
+              key={`${testimonial.name}-${index}`}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.25 }}
@@ -51,7 +45,7 @@ function Testimonials() {
               <div className="flex items-center justify-between">
                 <Quote size={30} className="text-cyan" />
                 <span className="rounded-md bg-cyan/10 px-3 py-1 text-xs font-extrabold text-cyan">
-                  Client vérifié
+                  {settings.testimonialsBadge || 'Client verifie'}
                 </span>
               </div>
               <p className="mt-5 text-base leading-8 text-slate-700">"{testimonial.quote}"</p>

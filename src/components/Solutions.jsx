@@ -10,20 +10,20 @@ import {
   Smartphone,
 } from 'lucide-react';
 
-const solutions = [
+const defaultSolutions = [
   {
     title: 'Gestion commerciale',
-    description: 'Ventes, stocks, facturation, clients, paiements et tableaux de bord opérationnels.',
+    description: 'Ventes, stocks, facturation, clients, paiements et tableaux de bord operationnels.',
     icon: PackageCheck,
   },
   {
     title: 'Gestion scolaire et universitaire',
-    description: 'Inscriptions, étudiants, notes, emplois du temps, absences et administration.',
+    description: 'Inscriptions, etudiants, notes, emplois du temps, absences et administration.',
     icon: GraduationCap,
   },
   {
-    title: 'Application de réservation',
-    description: 'Disponibilités, planning, paiement, notifications et gestion des demandes.',
+    title: 'Application de reservation',
+    description: 'Disponibilites, planning, paiement, notifications et gestion des demandes.',
     icon: CalendarCheck,
   },
   {
@@ -33,47 +33,68 @@ const solutions = [
   },
   {
     title: 'BI et reporting',
-    description: 'KPI, dashboards, visualisation de données et rapports de décision.',
+    description: 'KPI, dashboards, visualisation de donnees et rapports de decision.',
     icon: BarChart3,
   },
   {
-    title: 'CRM / ERP personnalisé',
-    description: 'Suivi commercial, workflow interne, automatisation et gestion multi-rôles.',
+    title: 'CRM / ERP personnalise',
+    description: 'Suivi commercial, workflow interne, automatisation et gestion multi-roles.',
     icon: LineChart,
   },
   {
-    title: 'Application mobile métier',
-    description: 'Outils mobiles pour équipes terrain, clients, agents et partenaires.',
+    title: 'Application mobile metier',
+    description: 'Outils mobiles pour equipes terrain, clients, agents et partenaires.',
     icon: Smartphone,
   },
   {
     title: 'Chatbot intelligent',
-    description: 'Support client, qualification de demandes et réponses connectées aux données internes.',
+    description: 'Support client, qualification de demandes et reponses connectees aux donnees internes.',
     icon: Bot,
   },
 ];
 
-function Solutions() {
+function parseItems(value, fallback) {
+  const lines = String(value || '')
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (lines.length === 0) return fallback;
+
+  return lines.map((line) => {
+    const [title, ...descriptionParts] = line.split('|').map((part) => part.trim());
+    return {
+      title,
+      description: descriptionParts.join(' | ') || 'Description a modifier depuis l espace admin.',
+    };
+  });
+}
+
+function Solutions({ settings = {} }) {
+  const solutions = parseItems(settings.solutionsItems, defaultSolutions);
+
   return (
     <section id="solutions" className="section-padding scroll-mt-24 bg-cloud">
       <div className="container-shell">
         <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
           <div>
-            <span className="eyebrow">Solutions</span>
-            <h2 className="section-title">Des produits digitaux conçus pour résoudre de vrais problèmes métier.</h2>
+            <span className="eyebrow">{settings.solutionsEyebrow || 'Solutions'}</span>
+            <h2 className="section-title">
+              {settings.solutionsTitle || 'Des produits digitaux concus pour resoudre de vrais problemes metier.'}
+            </h2>
           </div>
           <p className="text-base leading-8 text-slate-600 sm:text-lg">
-            Nous partons de vos flux opérationnels pour créer des systèmes précis : utiles dès le premier jour,
-            évolutifs sur le long terme et suffisamment clairs pour être adoptés par vos équipes.
+            {settings.solutionsDescription ||
+              'Nous partons de vos flux operationnels pour creer des systemes precis : utiles des le premier jour, evolutifs sur le long terme et suffisamment clairs pour etre adoptes par vos equipes.'}
           </p>
         </div>
 
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {solutions.map((solution, index) => {
-            const Icon = solution.icon;
+            const Icon = solution.icon || defaultSolutions[index % defaultSolutions.length]?.icon || PackageCheck;
             return (
               <motion.article
-                key={solution.title}
+                key={`${solution.title}-${index}`}
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.25 }}

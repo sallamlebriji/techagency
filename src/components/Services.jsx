@@ -11,35 +11,59 @@ const cardVariants = {
   }),
 };
 
-const proofPoints = [
+const defaultProofPoints = [
   'Architecture scalable et maintenable',
-  'Interfaces sobres, rapides et orientées conversion',
-  'Déploiement sécurisé avec support continu',
+  'Interfaces sobres, rapides et orientees conversion',
+  'Deploiement securise avec support continu',
 ];
 
-function Services() {
+function splitLines(value, fallback) {
+  const lines = String(value || '')
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return lines.length > 0 ? lines : fallback;
+}
+
+function parseItems(value, fallback) {
+  const items = splitLines(value, []);
+  if (items.length === 0) return fallback;
+
+  return items.map((line) => {
+    const [title, ...descriptionParts] = line.split('|').map((part) => part.trim());
+    return {
+      title,
+      description: descriptionParts.join(' | ') || 'Description a modifier depuis l espace admin.',
+    };
+  });
+}
+
+function Services({ settings = {} }) {
+  const serviceItems = parseItems(settings.servicesItems, services);
+  const proofPoints = splitLines(settings.servicesProofPoints, defaultProofPoints);
+
   return (
     <section id="services" className="section-padding scroll-mt-24 bg-white">
       <div className="container-shell">
         <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
           <div>
-            <span className="eyebrow">Services</span>
+            <span className="eyebrow">{settings.servicesEyebrow || 'Services'}</span>
             <h2 className="section-title">
-              Une expertise complète pour concevoir des solutions fiables et différenciantes.
+              {settings.servicesTitle || 'Une expertise complete pour concevoir des solutions fiables et differenciantes.'}
             </h2>
           </div>
           <p className="text-base leading-8 text-slate-600 sm:text-lg">
-            TechAgency accompagne chaque décision produit et technique : cadrage, design, développement,
-            intégration, déploiement, sécurité et amélioration continue.
+            {settings.servicesDescription ||
+              'TechAgency accompagne chaque decision produit et technique : cadrage, design, developpement, integration, deploiement, securite et amelioration continue.'}
           </p>
         </div>
 
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {services.map((service, index) => {
-            const Icon = service.icon;
+          {serviceItems.map((service, index) => {
+            const Icon = service.icon || services[index % services.length]?.icon || CheckCircle2;
             return (
               <motion.article
-                key={service.title}
+                key={`${service.title}-${index}`}
                 variants={cardVariants}
                 initial="hidden"
                 whileInView="visible"

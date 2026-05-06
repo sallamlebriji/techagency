@@ -21,14 +21,14 @@ const sectionMap = [
   { key: 'hero', match: ['hero'], render: (content) => <Hero settings={content.settings} /> },
   { key: 'modeles', match: ['modele', 'modeles'], render: () => <WebsiteModels /> },
   { key: 'portfolio', match: ['portfolio', 'projet'], render: (content) => <Portfolio loadedProjects={content.projects} /> },
-  { key: 'services', match: ['service'], render: () => <Services /> },
-  { key: 'audiences', match: ['pour qui', 'audience'], render: () => <Audiences /> },
-  { key: 'solutions', match: ['solution'], render: () => <Solutions /> },
-  { key: 'process', match: ['processus', 'process'], render: () => <Process /> },
-  { key: 'technologies', match: ['technologie'], render: () => <Technologies /> },
-  { key: 'about', match: ['apropos', 'a propos'], render: () => <About /> },
-  { key: 'testimonials', match: ['temoignage'], render: () => <Testimonials /> },
-  { key: 'pricing', match: ['offre'], render: (content) => <Pricing offers={content.offers} /> },
+  { key: 'services', match: ['service'], render: (content) => <Services settings={content.settings} /> },
+  { key: 'audiences', match: ['pour qui', 'audience'], render: (content) => <Audiences settings={content.settings} /> },
+  { key: 'solutions', match: ['solution'], render: (content) => <Solutions settings={content.settings} /> },
+  { key: 'process', match: ['processus', 'process'], render: (content) => <Process settings={content.settings} /> },
+  { key: 'technologies', match: ['technologie'], render: (content) => <Technologies settings={content.settings} /> },
+  { key: 'about', match: ['apropos', 'a propos'], render: (content) => <About settings={content.settings} /> },
+  { key: 'testimonials', match: ['temoignage'], render: (content) => <Testimonials settings={content.settings} /> },
+  { key: 'pricing', match: ['offre'], render: (content) => <Pricing offers={content.offers} settings={content.settings} /> },
   { key: 'contact', match: ['contact'], render: (content) => <Contact settings={content.settings} /> },
 ];
 
@@ -91,24 +91,33 @@ function App() {
         <Hero key="hero" settings={publicContent.settings} />,
         <WebsiteModels key="modeles" />,
         <Portfolio key="portfolio" loadedProjects={publicContent.projects} />,
-        <Services key="services" />,
-        <Audiences key="audiences" />,
-        <Solutions key="solutions" />,
-        <Process key="process" />,
-        <Technologies key="technologies" />,
-        <About key="about" />,
-        <Testimonials key="testimonials" />,
-        <Pricing key="pricing" offers={publicContent.offers} />,
+        <Services key="services" settings={publicContent.settings} />,
+        <Audiences key="audiences" settings={publicContent.settings} />,
+        <Solutions key="solutions" settings={publicContent.settings} />,
+        <Process key="process" settings={publicContent.settings} />,
+        <Technologies key="technologies" settings={publicContent.settings} />,
+        <About key="about" settings={publicContent.settings} />,
+        <Testimonials key="testimonials" settings={publicContent.settings} />,
+        <Pricing key="pricing" offers={publicContent.offers} settings={publicContent.settings} />,
         <Contact key="contact" settings={publicContent.settings} />,
       ];
     }
 
     const usedKeys = new Set();
+    const hiddenKeys = new Set();
     const sections = [];
+
+    (publicContent.sections || [])
+      .filter((section) => section.visible === false)
+      .forEach((section) => {
+        const haystack = `${section.title || ''} ${section.type || ''}`.toLowerCase();
+        const match = sectionMap.find((item) => item.match.some((word) => haystack.includes(word)));
+        if (match) hiddenKeys.add(match.key);
+      });
 
     mongoSections.forEach((section) => {
       const haystack = `${section.title || ''} ${section.type || ''}`.toLowerCase();
-      const match = sectionMap.find((item) => !usedKeys.has(item.key) && item.match.some((word) => haystack.includes(word)));
+      const match = sectionMap.find((item) => !usedKeys.has(item.key) && !hiddenKeys.has(item.key) && item.match.some((word) => haystack.includes(word)));
 
       if (match) {
         usedKeys.add(match.key);
@@ -119,7 +128,7 @@ function App() {
     });
 
     sectionMap.forEach((item) => {
-      if (!usedKeys.has(item.key)) {
+      if (!usedKeys.has(item.key) && !hiddenKeys.has(item.key)) {
         sections.push(<div key={item.key}>{item.render(publicContent)}</div>);
       }
     });
@@ -141,7 +150,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-white text-ink">
-      <Navbar settings={publicContent.settings} />
+      <Navbar settings={publicContent.settings} sections={publicContent.sections} />
       <main>{renderedSections}</main>
       <Footer settings={publicContent.settings} />
     </div>

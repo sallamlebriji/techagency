@@ -26,7 +26,7 @@ const heroStats = [
   { value: 'IA', label: 'Automatisation utile' },
 ];
 
-function TechAgencyDemoVisual() {
+function TechAgencyDemoVisual({ logoImage }) {
   return (
     <div className="relative h-[320px] overflow-hidden rounded-lg bg-white transition duration-700 group-hover:scale-[1.02] sm:h-[430px]">
       <div className="absolute inset-0 bg-gradient-to-br from-white via-cloud to-cyan/20" />
@@ -37,7 +37,7 @@ function TechAgencyDemoVisual() {
       <div className="absolute inset-4 overflow-hidden rounded-lg border border-cyan/20 bg-white/80 shadow-soft backdrop-blur">
         <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-white/90 px-4 py-3">
           <div className="flex items-center gap-2">
-            <LogoMark className="h-9 w-9 rounded-lg shadow-sm" />
+            <LogoMark src={logoImage} className="h-9 w-9 rounded-lg shadow-sm" />
             <div>
               <p className="font-display text-base font-bold leading-none text-navy">TechAgency</p>
               <p className="mt-1 text-[8px] font-extrabold uppercase text-slate-500">Software & AI Studio</p>
@@ -84,7 +84,7 @@ function TechAgencyDemoVisual() {
                 <div className="absolute left-5 right-5 top-6 rounded-lg border border-white/70 bg-white/55 p-3 shadow-soft backdrop-blur">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <LogoMark className="h-8 w-8 rounded-lg" />
+                      <LogoMark src={logoImage} className="h-8 w-8 rounded-lg" />
                       <div>
                         <p className="text-[9px] font-extrabold uppercase text-cyan">Demonstration digitale</p>
                         <p className="font-display text-lg font-bold leading-none text-navy">TechAgency</p>
@@ -148,6 +148,7 @@ function Hero({ settings }) {
     'TechAgency concoit des applications web, logiciels metiers, systemes de gestion, plateformes mobiles et solutions IA avec une exigence de clarte, de securite et de performance.';
   const primaryCta = settings?.heroPrimaryCta || 'Planifier un audit';
   const secondaryCta = settings?.heroSecondaryCta || 'Voir nos realisations';
+  const logoImage = settings?.logoImage;
 
   return (
     <section id="accueil" className="relative scroll-mt-24 overflow-hidden bg-cloud pt-28 sm:pt-32">
@@ -198,7 +199,7 @@ function Hero({ settings }) {
         >
           <div className="absolute -inset-5 rounded-lg bg-cyan/10 blur-2xl transition duration-500 group-hover:bg-cyan/20" />
           <div className="relative overflow-hidden rounded-lg border border-white bg-white p-3 shadow-premium transition duration-500 group-hover:shadow-glow">
-            <TechAgencyDemoVisual />
+            <TechAgencyDemoVisual logoImage={logoImage} />
             <div className="absolute bottom-7 left-7 right-7 rounded-lg border border-white/50 bg-white/90 p-4 text-navy shadow-soft backdrop-blur transition duration-500 group-hover:-translate-y-2">
               <p className="text-xs font-extrabold uppercase text-cyan">TechAgency command center</p>
               <p className="mt-1 text-lg font-extrabold">TechAgency : IA, booking et automatisation</p>
