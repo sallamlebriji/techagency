@@ -187,6 +187,21 @@ export const defaultAdminConfig = {
     pricingDescription:
       'Comme une vraie demarche produit, chaque offre clarifie le perimetre, les priorites et le niveau d accompagnement necessaire avant de passer au developpement.',
     pricingCta: 'Demander un devis',
+    pricingEstimatorEyebrow: 'Simulation rapide',
+    pricingEstimatorTitle: 'Estimez votre site ou systeme en quelques clics.',
+    pricingEstimatorDescription:
+      'Cette estimation donne une premiere fourchette indicative avec des prix raisonnables. Le devis final depend du perimetre exact, des integrations et des priorites.',
+    pricingEstimatorCurrency: 'MAD',
+    pricingEstimatorNote: 'Prix indicatifs et communicables selon le perimetre exact du projet.',
+    pricingEstimatorScreenPrice: '200',
+    pricingEstimatorItems:
+      'Site vitrine|2500|Presence professionnelle, pages essentielles et formulaire.\nLanding page|1500|Page de conversion rapide pour une offre ou campagne.\nSysteme de gestion|9000|Back-office, roles, donnees et workflows metier.\nPlateforme e-commerce|8000|Catalogue, panier, paiement et gestion commerciale.\nApplication web|12000|Produit web sur mesure avec espace client/admin.\nApplication mobile|15000|Experience mobile Android/iOS connectee au backend.\nSolution IA / automatisation|6000|Chatbot, workflows automatises ou analyse de donnees.',
+    pricingEstimatorOptions:
+      'Espace admin|1800\nPaiement en ligne|1500\nAuthentification|1200\nAutomatisation / IA|2500\nTableaux de bord|1800\nMaintenance initiale|900',
+    pricingEstimatorComplexities:
+      'Simple|1|Structure claire, peu de regles metier.\nBusiness|1.35|Parcours avances, admin et integrations.\nSur mesure|1.85|Architecture specifique, logique metier complexe.',
+    pricingEstimatorDelivery:
+      'Flexible|1|Delai standard.\nPrioritaire|1.1|Priorite de production.\nUrgent|1.2|Organisation acceleree.',
     contactTitle: 'Donnez-nous le contexte, nous vous aidons a structurer la solution.',
     contactDescription:
       'Decrivez votre besoin, vos contraintes et vos objectifs. Nous vous repondons avec une premiere lecture technique claire et des prochaines etapes concretes.',

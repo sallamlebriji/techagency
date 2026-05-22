@@ -92,6 +92,32 @@ body {
     radial-gradient(circle at center, rgba(37, 215, 215, 0.08), transparent 34%);
 }
 
+.orbit-stage {
+  --orbit-radius: clamp(5.25rem, 26vw, 7.25rem);
+  --orbit-avatar-size: clamp(3.25rem, 12vw, 4.5rem);
+}
+
+@media (min-width: 640px) {
+  .orbit-stage {
+    --orbit-radius: clamp(9.5rem, 29vw, 14.25rem);
+    --orbit-avatar-size: clamp(4.75rem, 11.5vw, 6.75rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .orbit-stage {
+    --orbit-radius: 15.5rem;
+    --orbit-avatar-size: 7.25rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .orbit-stage {
+    --orbit-radius: 16.25rem;
+    --orbit-avatar-size: 7.75rem;
+  }
+}
+
 .orbit-stage:hover .orbit-ring {
   animation-play-state: paused;
 }
@@ -100,8 +126,19 @@ body {
   animation: orbit-spin 28s linear infinite;
 }
 
+.orbit-slot {
+  transform: rotate(var(--orbit-angle)) translateX(var(--orbit-radius));
+  transform-origin: 0 0;
+}
+
 .orbit-item {
+  width: calc(var(--orbit-avatar-size) + 1.25rem);
   animation: orbit-counter-spin 28s linear infinite;
+}
+
+.audience-orbit-image {
+  width: var(--orbit-avatar-size);
+  height: var(--orbit-avatar-size);
 }
 
 .orbit-stage:hover .orbit-item {
@@ -120,11 +157,11 @@ body {
 
 @keyframes orbit-counter-spin {
   from {
-    transform: translate(-50%, -50%) rotate(0deg);
+    transform: translate(-50%, -50%) rotate(var(--orbit-counter-angle));
   }
 
   to {
-    transform: translate(-50%, -50%) rotate(-360deg);
+    transform: translate(-50%, -50%) rotate(calc(var(--orbit-counter-angle) - 360deg));
   }
 }
 

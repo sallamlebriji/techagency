@@ -2,11 +2,9 @@
 
 ## Architecture
 
-- Frontend: Vercel, connected to GitHub.
-- Backend API: Render Web Service.
+- Frontend: `frontend/`, deploye sur Vercel.
+- Backend API: `backend/`, deploye sur Render.
 - Database: MongoDB Atlas.
-
-Render still has a Free compute option for web services, but it is intended for personal projects/prototypes and has usage limits. Vercel Hobby is also free for personal projects.
 
 ## 1. MongoDB Atlas
 
@@ -17,13 +15,11 @@ MONGODB_URI=mongodb+srv://USER:PASSWORD@CLUSTER.mongodb.net/?retryWrites=true&w=
 MONGODB_DB=techagency
 ```
 
-Add your Render outbound access in Atlas Network Access. During setup, you can temporarily allow `0.0.0.0/0`, then tighten later.
-
 ## 2. Backend on Render
 
 Create a new Render Web Service from the GitHub repo.
 
-Use:
+Use the root repository with:
 
 ```bash
 Build Command: npm install
@@ -47,8 +43,6 @@ The first backend startup creates the admin user in MongoDB if `ADMIN_EMAIL` and
 npm run create-admin
 ```
 
-This creates or updates the admin user in the `admin_users` collection.
-
 After deploy, test:
 
 ```text
@@ -64,7 +58,11 @@ Expected:
 
 ## 3. Frontend on Vercel
 
-Import the same GitHub repo in Vercel.
+Import the same GitHub repo in Vercel, then set the project root to:
+
+```text
+frontend
+```
 
 Use:
 
@@ -80,7 +78,7 @@ Environment variable:
 VITE_API_URL=https://your-render-service.onrender.com
 ```
 
-Vercel will use `vercel.json` so `/admin` works on direct refresh.
+Vercel will use `frontend/vercel.json` so `/admin` works on direct refresh.
 
 ## 4. After both deployments
 

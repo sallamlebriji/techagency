@@ -268,6 +268,18 @@ function getStatusLabel(status) {
   return leadStatuses.find((item) => item.value === status)?.label || status || 'Nouveau';
 }
 
+function normalizeLabel(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function csvCell(value) {
+  const text = String(value || '').replace(/\r?\n/g, ' ');
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
 function AdminPanel({ standalone = false }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sections, setSections] = useState(initialSections);
@@ -333,6 +345,26 @@ function AdminPanel({ standalone = false }) {
       'Nous combinons cadrage produit, rigueur technique et cycles courts pour garder le projet lisible, maitrise et oriente resultat.',
     processItems:
       'Analyse du besoin|Audit, objectifs, utilisateurs, contraintes, priorites metier et perimetre fonctionnel.\nConception UI/UX|Parcours, maquettes, experience utilisateur, structure des ecrans et validation du concept.\nDeveloppement|Architecture, developpement frontend/backend, integrations et gestion des donnees.\nTest et validation|Tests fonctionnels, securite, performance, correction des anomalies et recette client.\nDeploiement|Mise en production, cloud, CI/CD, configuration, sauvegardes et monitoring.\nAmelioration continue|Maintenance, support, nouvelles fonctionnalites et optimisation selon les retours terrain.',
+    pricingEyebrow: 'Offres',
+    pricingTitle: 'Des packs simples pour cadrer rapidement votre projet.',
+    pricingDescription:
+      'Comme une vraie demarche produit, chaque offre clarifie le perimetre, les priorites et le niveau d accompagnement necessaire avant de passer au developpement.',
+    pricingCta: 'Demander un devis',
+    pricingEstimatorEyebrow: 'Simulation rapide',
+    pricingEstimatorTitle: 'Estimez votre site ou systeme en quelques clics.',
+    pricingEstimatorDescription:
+      'Cette estimation donne une premiere fourchette indicative avec des prix raisonnables. Le devis final depend du perimetre exact, des integrations et des priorites.',
+    pricingEstimatorCurrency: 'MAD',
+    pricingEstimatorNote: 'Prix indicatifs et communicables selon le perimetre exact du projet.',
+    pricingEstimatorScreenPrice: '200',
+    pricingEstimatorItems:
+      'Site vitrine|2500|Presence professionnelle, pages essentielles et formulaire.\nLanding page|1500|Page de conversion rapide pour une offre ou campagne.\nSysteme de gestion|9000|Back-office, roles, donnees et workflows metier.\nPlateforme e-commerce|8000|Catalogue, panier, paiement et gestion commerciale.\nApplication web|12000|Produit web sur mesure avec espace client/admin.\nApplication mobile|15000|Experience mobile Android/iOS connectee au backend.\nSolution IA / automatisation|6000|Chatbot, workflows automatises ou analyse de donnees.',
+    pricingEstimatorOptions:
+      'Espace admin|1800\nPaiement en ligne|1500\nAuthentification|1200\nAutomatisation / IA|2500\nTableaux de bord|1800\nMaintenance initiale|900',
+    pricingEstimatorComplexities:
+      'Simple|1|Structure claire, peu de regles metier.\nBusiness|1.35|Parcours avances, admin et integrations.\nSur mesure|1.85|Architecture specifique, logique metier complexe.',
+    pricingEstimatorDelivery:
+      'Flexible|1|Delai standard.\nPrioritaire|1.1|Priorite de production.\nUrgent|1.2|Organisation acceleree.',
     contactTitle: 'Donnez-nous le contexte, nous vous aidons a structurer la solution.',
     contactDescription:
       'Decrivez votre besoin, vos contraintes et vos objectifs. Nous vous repondons avec une premiere lecture technique claire et des prochaines etapes concretes.',
@@ -512,6 +544,17 @@ function AdminPanel({ standalone = false }) {
     setSiteSettings((current) => ({ ...current, [key]: value }));
   };
 
+  const selectSectionByKeyword = (keyword) => {
+    const normalizedKeyword = normalizeLabel(keyword);
+    const match = sections.find((section) => {
+      const title = normalizeLabel(section.title);
+      const type = normalizeLabel(section.type);
+      return title.includes(normalizedKeyword) || type.includes(normalizedKeyword);
+    });
+    if (match) setSelectedSectionId(match.id);
+    return match;
+  };
+
   const updateSection = (id, updates) => {
     setSections((current) => current.map((section) => (section.id === id ? { ...section, ...updates } : section)));
   };
@@ -582,6 +625,22 @@ function AdminPanel({ standalone = false }) {
     if (!name) return;
     setOffers((current) => [...current, { id: Date.now(), name, price: 'Sur devis', status: 'Brouillon' }]);
     setNewOfferName('');
+  };
+
+  const addQuickOffer = () => {
+    const nextOffer = {
+      id: Date.now(),
+      name: 'Nouvelle offre',
+      price: 'Sur devis',
+      status: 'Publie',
+      description: 'Description commerciale a personnaliser.',
+      featuresText: 'Cadrage du besoin\nEstimation claire\nPlan d action priorise',
+    };
+
+    setOffers((current) => [...current, nextOffer]);
+    setNewOfferName('');
+    setActiveTab('offers');
+    setSavedMessage('Nouvelle offre publiee en brouillon local. Clique Enregistrer pour la sauvegarder dans MongoDB.');
   };
 
   const updateOffer = (id, updates) => {
@@ -674,6 +733,84 @@ function AdminPanel({ standalone = false }) {
     } catch (error) {
       setSavedMessage(error.message);
     }
+  };
+
+  const addQuickService = () => {
+    const title = 'Nouveau service';
+    const description = 'Description du service a personnaliser.';
+    const servicesSection = selectSectionByKeyword('services');
+
+    if (servicesSection) {
+      setSections((current) =>
+        current.map((section) =>
+          section.id === servicesSection.id
+            ? { ...section, blocks: [...(section.blocks || []), title] }
+            : section,
+        ),
+      );
+    }
+
+    setSiteSettings((current) => {
+      const existing = String(current.servicesItems || '').trim();
+      const nextLine = `${title}|${description}`;
+      return { ...current, servicesItems: existing ? `${existing}\n${nextLine}` : nextLine };
+    });
+
+    setActiveTab('content');
+    setSavedMessage('Service ajoute. Modifie son nom/texte puis clique Enregistrer pour MongoDB.');
+  };
+
+  const editQuickModel = () => {
+    const match = selectSectionByKeyword('modeles') || selectSectionByKeyword('modele');
+    setActiveTab('content');
+    setSavedMessage(
+      match
+        ? 'Section Modeles ouverte. Tu peux modifier les blocs, la visibilite et l ordre.'
+        : 'Onglet Contenu ouvert. Ajoute ou selectionne une section Modeles.',
+    );
+  };
+
+  const exportLeadsCsv = () => {
+    const rows = dashboardLeads.length > 0 ? dashboardLeads : leads;
+    if (!rows.length) {
+      setSavedMessage('Aucune demande a exporter.');
+      return;
+    }
+
+    const header = ['Nom', 'Email', 'Telephone', 'Type projet', 'Statut', 'Date', 'Message'];
+    const lines = [
+      header.map(csvCell).join(','),
+      ...rows.map((lead) =>
+        [
+          lead.name,
+          lead.email,
+          lead.phone,
+          lead.type,
+          getStatusLabel(lead.status),
+          lead.value || lead.createdAt,
+          lead.message,
+        ]
+          .map(csvCell)
+          .join(','),
+      ),
+    ];
+    const blob = new Blob([`\ufeff${lines.join('\n')}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `techagency-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setSavedMessage('Export CSV des leads telecharge.');
+  };
+
+  const handleQuickAction = (action) => {
+    if (action === 'service') addQuickService();
+    if (action === 'model') editQuickModel();
+    if (action === 'offer') addQuickOffer();
+    if (action === 'export') exportLeadsCsv();
   };
 
   if (authLoading) {
@@ -896,13 +1033,19 @@ function AdminPanel({ standalone = false }) {
                     <div className="rounded-lg border border-slate-200 bg-navy p-5 text-white shadow-sm">
                       <h3 className="text-lg font-extrabold">Actions rapides</h3>
                       <div className="mt-5 grid gap-3">
-                        {['Ajouter un service', 'Modifier un modele', 'Publier une offre', 'Exporter les leads'].map((item) => (
+                        {[
+                          { label: 'Ajouter un service', action: 'service' },
+                          { label: 'Modifier un modele', action: 'model' },
+                          { label: 'Publier une offre', action: 'offer' },
+                          { label: 'Exporter les leads', action: 'export' },
+                        ].map((item) => (
                           <button
-                            key={item}
+                            key={item.action}
                             type="button"
+                            onClick={() => handleQuickAction(item.action)}
                             className="flex items-center justify-between rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-sm font-bold transition hover:border-cyan hover:text-cyan"
                           >
-                            {item}
+                            {item.label}
                             <SlidersHorizontal size={17} />
                           </button>
                         ))}
@@ -1816,6 +1959,62 @@ function AdminPanel({ standalone = false }) {
                         label="CTA Offres"
                         value={siteSettings.pricingCta || ''}
                         onChange={(value) => updateSetting('pricingCta', value)}
+                      />
+                      <EditableInput
+                        label="Badge simulateur prix"
+                        value={siteSettings.pricingEstimatorEyebrow || ''}
+                        onChange={(value) => updateSetting('pricingEstimatorEyebrow', value)}
+                      />
+                      <EditableTextarea
+                        label="Titre simulateur prix"
+                        value={siteSettings.pricingEstimatorTitle || ''}
+                        onChange={(value) => updateSetting('pricingEstimatorTitle', value)}
+                        rows={3}
+                      />
+                      <EditableTextarea
+                        label="Description simulateur prix"
+                        value={siteSettings.pricingEstimatorDescription || ''}
+                        onChange={(value) => updateSetting('pricingEstimatorDescription', value)}
+                        rows={3}
+                      />
+                      <EditableInput
+                        label="Devise simulateur"
+                        value={siteSettings.pricingEstimatorCurrency || ''}
+                        onChange={(value) => updateSetting('pricingEstimatorCurrency', value)}
+                      />
+                      <EditableInput
+                        label="Prix par page / ecran"
+                        value={siteSettings.pricingEstimatorScreenPrice || ''}
+                        onChange={(value) => updateSetting('pricingEstimatorScreenPrice', value)}
+                      />
+                      <EditableInput
+                        label="Note prix communicables"
+                        value={siteSettings.pricingEstimatorNote || ''}
+                        onChange={(value) => updateSetting('pricingEstimatorNote', value)}
+                      />
+                      <EditableTextarea
+                        label="Prix de base simulateur - format Type|Prix|Description"
+                        value={siteSettings.pricingEstimatorItems || ''}
+                        onChange={(value) => updateSetting('pricingEstimatorItems', value)}
+                        rows={7}
+                      />
+                      <EditableTextarea
+                        label="Options simulateur - format Option|Prix"
+                        value={siteSettings.pricingEstimatorOptions || ''}
+                        onChange={(value) => updateSetting('pricingEstimatorOptions', value)}
+                        rows={6}
+                      />
+                      <EditableTextarea
+                        label="Complexite simulateur - format Nom|Multiplicateur|Note"
+                        value={siteSettings.pricingEstimatorComplexities || ''}
+                        onChange={(value) => updateSetting('pricingEstimatorComplexities', value)}
+                        rows={4}
+                      />
+                      <EditableTextarea
+                        label="Delais simulateur - format Nom|Multiplicateur|Note"
+                        value={siteSettings.pricingEstimatorDelivery || ''}
+                        onChange={(value) => updateSetting('pricingEstimatorDelivery', value)}
+                        rows={4}
                       />
                       <EditableInput
                         label="Email contact"

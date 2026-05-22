@@ -1,6 +1,14 @@
-import 'dotenv/config';
 import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getDb, closeDb } from './db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const email = process.env.ADMIN_EMAIL?.toLowerCase();
 const password = process.env.ADMIN_PASSWORD;

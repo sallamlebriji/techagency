@@ -1,8 +1,5 @@
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, Cpu, Database, ShieldCheck } from 'lucide-react';
-import { projects } from '../data/projects.js';
-import { apiUrl } from '../lib/api.js';
 
 function normalizeProject(project) {
   return {
@@ -17,35 +14,7 @@ function normalizeProject(project) {
 }
 
 function Portfolio({ loadedProjects }) {
-  const [portfolioProjects, setPortfolioProjects] = useState((loadedProjects || projects).map(normalizeProject));
-
-  useEffect(() => {
-    if (Array.isArray(loadedProjects)) {
-      setPortfolioProjects(loadedProjects.map(normalizeProject));
-      return undefined;
-    }
-
-    let cancelled = false;
-
-    async function loadProjects() {
-      try {
-        const response = await fetch(apiUrl('/api/public-content'));
-        if (!response.ok) return;
-        const content = await response.json();
-        if (!cancelled && Array.isArray(content.projects)) {
-          setPortfolioProjects(content.projects.map(normalizeProject));
-        }
-      } catch {
-        // Keep static fallback projects when the API is not available.
-      }
-    }
-
-    loadProjects();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const portfolioProjects = Array.isArray(loadedProjects) ? loadedProjects.map(normalizeProject) : [];
 
   return (
     <section id="portfolio" className="section-padding scroll-mt-24 bg-cloud">

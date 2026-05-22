@@ -1,7 +1,7 @@
-import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import cors from 'cors';
 import crypto from 'node:crypto';
+import dotenv from 'dotenv';
 import express from 'express';
 import { ObjectId } from 'mongodb';
 import path from 'node:path';
@@ -10,11 +10,14 @@ import { getDb } from './db.js';
 import { defaultAdminConfig } from './defaultAdminData.js';
 
 const app = express();
-const port = Number(process.env.PORT || 4000);
-const configKey = 'main';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const distPath = path.resolve(__dirname, '../dist');
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+const port = Number(process.env.PORT || 4000);
+const configKey = 'main';
 const allowedOrigins = (process.env.FRONTEND_URL || '')
   .split(',')
   .map((origin) => origin.trim())
@@ -452,15 +455,8 @@ app.post('/api/contact', async (request, response) => {
   }
 });
 
-app.use(express.static(distPath));
-
-app.get('*splat', (request, response, next) => {
-  if (request.path.startsWith('/api')) {
-    next();
-    return;
-  }
-
-  response.sendFile(path.join(distPath, 'index.html'));
+app.use((_request, response) => {
+  response.status(404).json({ message: 'Route API introuvable.' });
 });
 
 ensureDefaultAdminUser()

@@ -58,7 +58,8 @@ function GenericSection({ section }) {
 }
 
 function App() {
-  const [publicContent, setPublicContent] = useState(defaultPublicContent);
+  const [publicContent, setPublicContent] = useState(null);
+  const [contentError, setContentError] = useState('');
   const isAdminPage = window.location.pathname === '/admin';
 
   useEffect(() => {
@@ -68,11 +69,11 @@ function App() {
     async function loadPublicContent() {
       try {
         const response = await fetch(apiUrl('/api/public-content'));
-        if (!response.ok) return;
+        if (!response.ok) throw new Error('Impossible de charger le contenu public.');
         const content = await response.json();
         if (!cancelled) setPublicContent({ ...defaultPublicContent, ...content });
-      } catch {
-        // Static fallback remains active when Mongo/API is unavailable.
+      } catch (error) {
+        if (!cancelled) setContentError(error.message || 'Impossible de charger le contenu public.');
       }
     }
 
@@ -84,6 +85,8 @@ function App() {
   }, [isAdminPage]);
 
   const renderedSections = useMemo(() => {
+    if (!publicContent) return [];
+
     const mongoSections = Array.isArray(publicContent.sections) ? publicContent.sections.filter((section) => section.visible !== false) : [];
 
     if (mongoSections.length === 0) {
@@ -140,6 +143,19 @@ function App() {
     return (
       <div className="min-h-screen bg-cloud text-ink">
         <AdminPanel standalone />
+      </div>
+    );
+  }
+
+  if (!publicContent) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-cloud px-4 text-center text-navy">
+        <div>
+          <p className="font-display text-2xl font-bold">
+            {contentError || 'Chargement du contenu...'}
+          </p>
+          {contentError ? <p className="mt-3 text-sm text-slate-600">Verifie la connexion API et MongoDB.</p> : null}
+        </div>
       </div>
     );
   }
