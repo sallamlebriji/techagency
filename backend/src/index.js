@@ -22,9 +22,14 @@ const allowedOrigins = (process.env.FRONTEND_URL || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+const allowedOriginPatterns = [/^https:\/\/frontend-[a-z0-9-]+\.vercel\.app$/];
 const adminEmail = process.env.ADMIN_EMAIL || 'admin@techagency.local';
 const adminPassword = process.env.ADMIN_PASSWORD || '';
 const cookieName = 'techagency_admin';
+
+function isAllowedOrigin(origin) {
+  return allowedOrigins.includes(origin) || allowedOriginPatterns.some((pattern) => pattern.test(origin));
+}
 
 function getSessionSecret() {
   return process.env.SESSION_SECRET || process.env.ADMIN_PASSWORD || 'dev-session-secret-change-me';
@@ -73,7 +78,7 @@ app.use(
   cors({
     credentials: true,
     origin(origin, callback) {
-      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.length === 0 || isAllowedOrigin(origin)) {
         callback(null, true);
         return;
       }
