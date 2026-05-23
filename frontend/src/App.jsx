@@ -73,7 +73,8 @@ function App() {
         const content = await response.json();
         if (!cancelled) setPublicContent({ ...defaultPublicContent, ...content });
       } catch (error) {
-        if (!cancelled) setContentError(error.message || 'Impossible de charger le contenu public.');
+        console.warn(error.message || 'Impossible de charger le contenu public.');
+        if (!cancelled) setPublicContent(defaultPublicContent);
       }
     }
 

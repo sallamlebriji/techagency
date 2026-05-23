@@ -210,6 +210,17 @@ function normalizeSections(sections = []) {
   return [...canonicalSections, ...customSections];
 }
 
+function buildPublicContent(savedConfig = {}) {
+  const projects = savedConfig?.projects || defaultAdminConfig.projects;
+
+  return {
+    sections: normalizeSections(savedConfig?.sections),
+    offers: savedConfig?.offers || defaultAdminConfig.offers,
+    projects: projects.filter((project) => project.visible !== false),
+    settings: { ...defaultAdminConfig.settings, ...(savedConfig?.settings || {}) },
+  };
+}
+
 async function ensureDefaultAdminUser() {
   const collection = await getAdminUsersCollection();
   await collection.createIndex({ email: 1 }, { unique: true });
@@ -377,16 +388,11 @@ app.get('/api/public-content', async (_request, response) => {
   try {
     const collection = await getConfigCollection();
     const savedConfig = await collection.findOne({ key: configKey }, { projection: { _id: 0 } });
-    const projects = savedConfig?.projects || defaultAdminConfig.projects;
-
-    response.json({
-      sections: normalizeSections(savedConfig?.sections),
-      offers: savedConfig?.offers || defaultAdminConfig.offers,
-      projects: projects.filter((project) => project.visible !== false),
-      settings: { ...defaultAdminConfig.settings, ...(savedConfig?.settings || {}) },
-    });
+    response.json(buildPublicContent(savedConfig));
   } catch (error) {
-    response.status(500).json({ message: 'Impossible de charger le contenu public.', detail: error.message });
+    console.warn(`Public content fallback used: ${error.message}`);
+    response.set('X-Content-Fallback', 'default');
+    response.json(buildPublicContent());
   }
 });
 
@@ -459,12 +465,10 @@ app.use((_request, response) => {
   response.status(404).json({ message: 'Route API introuvable.' });
 });
 
-ensureDefaultAdminUser()
-  .catch((error) => {
+app.listen(port, () => {
+  console.log(`TechAgency API running on http://127.0.0.1:${port}`);
+
+  ensureDefaultAdminUser().catch((error) => {
     console.warn(`Default admin seed skipped: ${error.message}`);
-  })
-  .finally(() => {
-    app.listen(port, () => {
-      console.log(`TechAgency API running on http://127.0.0.1:${port}`);
-    });
   });
+});

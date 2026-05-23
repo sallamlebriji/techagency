@@ -11,6 +11,7 @@ import {
   FileText,
   LayoutDashboard,
   LockKeyhole,
+  LogOut,
   Mail,
   MessageSquareText,
   Palette,
@@ -280,6 +281,110 @@ function csvCell(value) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
+function AdminLoginPage({
+  adminEmail,
+  adminPassword,
+  apiStatus,
+  isSubmitting,
+  loginAdmin,
+  savedMessage,
+  setAdminEmail,
+  setAdminPassword,
+  setShowAdminPassword,
+  showAdminPassword,
+}) {
+  return (
+    <section className="flex min-h-screen items-center bg-cloud py-10">
+      <div className="container-shell">
+        <div className="mx-auto grid max-w-5xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-premium lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="bg-navy p-8 text-white sm:p-10">
+            <a href="/" className="flex items-center gap-3">
+              <LogoMark className="h-12 w-12 rounded-lg shadow-sm" />
+              <span>
+                <span className="block text-xl font-extrabold leading-none">TechAgency</span>
+                <span className="text-xs font-extrabold uppercase text-cyan">Console admin</span>
+              </span>
+            </a>
+
+            <div className="mt-16">
+              <span className="inline-flex items-center gap-2 rounded-md border border-cyan/40 bg-cyan/10 px-3 py-1 text-xs font-extrabold uppercase text-cyan">
+                <LockKeyhole size={15} />
+                Acces securise
+              </span>
+              <h1 className="mt-5 font-display text-4xl font-bold leading-tight">Connexion administrateur</h1>
+              <p className="mt-5 text-sm font-semibold leading-7 text-slate-300">
+                Connecte-toi pour gerer le contenu du site, les demandes clients, les offres, les projets et les
+                parametres publics.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-6 sm:p-8 lg:p-10">
+            <form onSubmit={loginAdmin} className="space-y-5">
+              <label className="block">
+                <span className="text-sm font-extrabold text-navy">Email admin</span>
+                <input
+                  type="email"
+                  value={adminEmail}
+                  onChange={(event) => setAdminEmail(event.target.value)}
+                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-navy outline-none transition focus:border-cyan focus:ring-4 focus:ring-cyan/10"
+                  placeholder="admin@techagency.local"
+                  autoComplete="username"
+                  required
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-extrabold text-navy">Mot de passe admin</span>
+                <span className="mt-2 flex overflow-hidden rounded-lg border border-slate-200 bg-white focus-within:border-cyan focus-within:ring-4 focus-within:ring-cyan/10">
+                  <input
+                    type={showAdminPassword ? 'text' : 'password'}
+                    value={adminPassword}
+                    onChange={(event) => setAdminPassword(event.target.value)}
+                    className="min-w-0 flex-1 px-4 py-3 text-sm font-semibold text-navy outline-none"
+                    placeholder="Entrer le mot de passe"
+                    autoComplete="current-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminPassword((value) => !value)}
+                    className="flex w-12 items-center justify-center border-l border-slate-200 text-slate-500 transition hover:text-cyan"
+                    aria-label={showAdminPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  >
+                    {showAdminPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </span>
+              </label>
+
+              {savedMessage && (
+                <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600">
+                  {savedMessage}
+                </p>
+              )}
+
+              <div className="rounded-lg border border-slate-200 bg-cloud px-4 py-3 text-xs font-bold text-slate-600">
+                <p>API: {getApiBaseUrl()}</p>
+                <p className="mt-1">{apiStatus}</p>
+              </div>
+
+              <button type="submit" disabled={isSubmitting} className="primary-button w-full disabled:cursor-wait disabled:opacity-70">
+                <LockKeyhole size={18} />
+                {isSubmitting ? 'Connexion...' : "Acceder a l'admin"}
+              </button>
+            </form>
+
+            <a href="/" className="secondary-button mt-4 w-full">
+              <PanelLeft size={17} />
+              Retour au site
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function AdminPanel({ standalone = false }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sections, setSections] = useState(initialSections);
@@ -302,6 +407,8 @@ function AdminPanel({ standalone = false }) {
   const [adminAuthenticated, setAdminAuthenticated] = useState(false);
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
   const [siteSettings, setSiteSettings] = useState({
     agencyName: 'TechAgency',
     tagline: 'Software & AI Studio',
@@ -477,6 +584,7 @@ function AdminPanel({ standalone = false }) {
   const loginAdmin = async (event) => {
     event.preventDefault();
     setSavedMessage('');
+    setLoginLoading(true);
 
     try {
       const response = await adminFetch('/api/admin-login', {
@@ -496,6 +604,7 @@ function AdminPanel({ standalone = false }) {
       setAdminAuthenticated(true);
       setAdminEmail('');
       setAdminPassword('');
+      setShowAdminPassword(false);
       setSavedMessage('');
     } catch (error) {
       setSavedMessage(
@@ -503,6 +612,23 @@ function AdminPanel({ standalone = false }) {
           ? `Impossible de joindre l API (${getApiBaseUrl()}). Verifie VITE_API_URL, Render et CORS FRONTEND_URL.`
           : error.message,
       );
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const logoutAdmin = async () => {
+    try {
+      await adminFetch('/api/admin-logout', { method: 'POST' });
+    } catch (error) {
+      console.warn(error.message || 'Deconnexion admin incomplete.');
+    } finally {
+      setAdminToken('');
+      setAdminAuthenticated(false);
+      setAdminPassword('');
+      setShowAdminPassword(false);
+      setSavedMessage('');
+      setDatabaseStatus('Connecte-toi pour charger MongoDB');
     }
   };
 
@@ -828,60 +954,18 @@ function AdminPanel({ standalone = false }) {
 
   if (!adminAuthenticated) {
     return (
-      <section className="min-h-screen bg-cloud py-10">
-        <div className="container-shell">
-          <div className="mx-auto max-w-lg rounded-lg border border-slate-200 bg-white p-6 shadow-premium sm:p-8">
-            <a href="/" className="flex items-center gap-3">
-              <LogoMark className="h-12 w-12 rounded-lg shadow-sm" />
-              <span>
-                <span className="block text-xl font-extrabold leading-none text-navy">TechAgency Admin</span>
-                <span className="text-xs font-extrabold uppercase text-cyan">Acces securise</span>
-              </span>
-            </a>
-
-            <form onSubmit={loginAdmin} className="mt-8">
-              <label className="mt-4 block">
-                <span className="text-sm font-extrabold text-navy">Email admin</span>
-                <input
-                  type="email"
-                  value={adminEmail}
-                  onChange={(event) => setAdminEmail(event.target.value)}
-                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-navy outline-none transition focus:border-cyan focus:ring-4 focus:ring-cyan/10"
-                  placeholder="admin@techagency.local"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-extrabold text-navy">Mot de passe admin</span>
-                <input
-                  type="password"
-                  value={adminPassword}
-                  onChange={(event) => setAdminPassword(event.target.value)}
-                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-navy outline-none transition focus:border-cyan focus:ring-4 focus:ring-cyan/10"
-                  placeholder="Entrer le mot de passe"
-                />
-              </label>
-              {savedMessage && (
-                <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600">
-                  {savedMessage}
-                </p>
-              )}
-              <div className="mt-4 rounded-lg border border-slate-200 bg-cloud px-4 py-3 text-xs font-bold text-slate-600">
-                <p>API: {getApiBaseUrl()}</p>
-                <p className="mt-1">{apiStatus}</p>
-              </div>
-              <button type="submit" className="primary-button mt-6 w-full">
-                <LockKeyhole size={18} />
-                Acceder a l'admin
-              </button>
-            </form>
-
-            <a href="/" className="secondary-button mt-4 w-full">
-              <PanelLeft size={17} />
-              Retour au site
-            </a>
-          </div>
-        </div>
-      </section>
+      <AdminLoginPage
+        adminEmail={adminEmail}
+        adminPassword={adminPassword}
+        apiStatus={apiStatus}
+        isSubmitting={loginLoading}
+        loginAdmin={loginAdmin}
+        savedMessage={savedMessage}
+        setAdminEmail={setAdminEmail}
+        setAdminPassword={setAdminPassword}
+        setShowAdminPassword={setShowAdminPassword}
+        showAdminPassword={showAdminPassword}
+      />
     );
   }
 
@@ -897,10 +981,16 @@ function AdminPanel({ standalone = false }) {
                 <span className="text-xs font-extrabold uppercase text-cyan">Console de gestion</span>
               </span>
             </a>
-            <a href="/" className="secondary-button">
-              <PanelLeft size={17} />
-              Retour au site
-            </a>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <a href="/" className="secondary-button">
+                <PanelLeft size={17} />
+                Retour au site
+              </a>
+              <button type="button" onClick={logoutAdmin} className="secondary-button border-red-200 text-red-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700">
+                <LogOut size={17} />
+                Deconnexion
+              </button>
+            </div>
           </div>
         )}
 

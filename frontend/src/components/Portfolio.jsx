@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { ArrowUpRight, Cpu, Database, ShieldCheck } from 'lucide-react';
+import { projects as defaultProjects } from '../data/projects.js';
 
 function normalizeProject(project) {
   return {
@@ -14,7 +15,8 @@ function normalizeProject(project) {
 }
 
 function Portfolio({ loadedProjects }) {
-  const portfolioProjects = Array.isArray(loadedProjects) ? loadedProjects.map(normalizeProject) : [];
+  const sourceProjects = Array.isArray(loadedProjects) && loadedProjects.length > 0 ? loadedProjects : defaultProjects;
+  const portfolioProjects = sourceProjects.map(normalizeProject);
 
   return (
     <section id="portfolio" className="section-padding scroll-mt-24 bg-cloud">
