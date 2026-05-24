@@ -590,12 +590,12 @@ function AdminPanel({ standalone = false }) {
       const response = await adminFetch('/api/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: adminEmail, password: adminPassword }),
+        body: JSON.stringify({ email: adminEmail.trim(), password: adminPassword.trim() }),
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || 'Mot de passe incorrect');
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.message || `Connexion refusee par l API (${response.status})`);
       }
 
       const loginData = await response.json();

@@ -22,7 +22,7 @@ const allowedOrigins = (process.env.FRONTEND_URL || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
-const allowedOriginPatterns = [/^https:\/\/frontend-[a-z0-9-]+\.vercel\.app$/];
+const allowedOriginPatterns = [/^https:\/\/[a-z0-9-]+\.vercel\.app$/];
 const adminEmail = process.env.ADMIN_EMAIL || 'admin@techagency.local';
 const adminPassword = process.env.ADMIN_PASSWORD || '';
 const cookieName = 'techagency_admin';
@@ -83,7 +83,7 @@ app.use(
         return;
       }
 
-      callback(new Error('Origin not allowed by CORS'));
+      callback(null, false);
     },
   }),
 );
@@ -91,15 +91,17 @@ app.use(
 app.post('/api/admin-login', async (request, response) => {
   try {
     const { email, password } = request.body || {};
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const normalizedPassword = String(password || '').trim();
 
-    if (!email || !password) {
+    if (!normalizedEmail || !normalizedPassword) {
       response.status(400).json({ message: 'Email et mot de passe obligatoires.' });
       return;
     }
 
     const collection = await getAdminUsersCollection();
-    const user = await collection.findOne({ email: String(email).toLowerCase() });
-    const validPassword = user ? await bcrypt.compare(password, user.passwordHash) : false;
+    const user = await collection.findOne({ email: normalizedEmail });
+    const validPassword = user ? await bcrypt.compare(normalizedPassword, user.passwordHash) : false;
 
     if (!user || !validPassword) {
       response.status(401).json({ message: 'Identifiants admin incorrects.' });
