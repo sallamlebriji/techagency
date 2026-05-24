@@ -40,43 +40,20 @@ function Audiences({ settings = {} }) {
           </p>
         </div>
 
-        <div className="mt-8 grid gap-3 sm:hidden">
-          <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-soft">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-navy text-cyan shadow-soft">
-              <Cpu className="h-5 w-5" />
-            </span>
-            <span>
-              <span className="block font-display text-xl font-bold leading-none text-navy">{settings.agencyName || 'TechAgency'}</span>
-              <span className="mt-1 block text-[0.65rem] font-extrabold uppercase leading-tight text-cyan">{settings.tagline || 'Software & AI Studio'}</span>
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {audiences.map((audience) => (
-              <article key={audience.title} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                <img src={audience.image} alt={audience.title} loading="lazy" className="h-24 w-full object-cover" />
-                <div className="flex min-h-12 items-center justify-center px-3 py-2 text-center text-xs font-extrabold leading-tight text-navy">
-                  {audience.title}
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
           transition={{ duration: 0.7 }}
-          className="orbit-stage hero-dots elegant-rings relative mx-auto mt-10 hidden max-w-5xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft sm:block sm:mt-12 sm:min-h-[560px] lg:min-h-[700px] xl:max-w-6xl xl:min-h-[740px]"
+          className="orbit-stage hero-dots elegant-rings relative mx-auto mt-10 min-h-[440px] max-w-5xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft sm:mt-12 sm:min-h-[560px] lg:min-h-[700px] xl:max-w-6xl xl:min-h-[740px]"
         >
-          <div className="absolute left-1/2 top-1/2 z-20 flex w-28 -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-white/95 px-2.5 py-2.5 text-center shadow-premium backdrop-blur sm:w-auto sm:flex-row sm:gap-2.5 sm:px-5 sm:py-4 sm:text-left lg:px-6 lg:py-5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy text-cyan shadow-soft sm:h-12 sm:w-12 lg:h-14 lg:w-14">
-              <Cpu className="h-4 w-4 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
+          <div className="absolute left-1/2 top-1/2 z-20 flex w-24 -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 rounded-lg border border-slate-200 bg-white/95 px-2 py-2 text-center shadow-premium backdrop-blur sm:w-auto sm:flex-row sm:gap-2.5 sm:px-5 sm:py-4 sm:text-left lg:px-6 lg:py-5">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-navy text-cyan shadow-soft sm:h-12 sm:w-12 lg:h-14 lg:w-14">
+              <Cpu className="h-3.5 w-3.5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
             </span>
             <span>
-              <span className="block max-w-full break-words font-display text-base font-bold leading-none text-navy sm:whitespace-nowrap sm:text-2xl lg:text-3xl">{settings.agencyName || 'TechAgency'}</span>
-              <span className="mt-1 block text-[0.5rem] font-extrabold uppercase leading-tight text-cyan sm:text-[0.65rem] lg:text-xs">{settings.tagline || 'Software & AI Studio'}</span>
+              <span className="block max-w-full break-words font-display text-sm font-bold leading-none text-navy sm:whitespace-nowrap sm:text-2xl lg:text-3xl">{settings.agencyName || 'TechAgency'}</span>
+              <span className="mt-1 block text-[0.42rem] font-extrabold uppercase leading-tight text-cyan sm:text-[0.65rem] lg:text-xs">{settings.tagline || 'Software & AI Studio'}</span>
             </span>
           </div>
 
