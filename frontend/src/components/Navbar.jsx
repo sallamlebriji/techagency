@@ -84,11 +84,11 @@ function Navbar({ settings, sections }) {
           : 'border-b border-white/50 bg-white/80 backdrop-blur-md'
       }`}
     >
-      <nav className="container-shell flex h-20 items-center justify-between">
+      <nav className="container-shell flex h-16 items-center justify-between sm:h-20">
         <a href="#accueil" className="flex items-center gap-3" onClick={() => setOpen(false)}>
-          <LogoMark src={settings?.logoImage} className="h-10 w-10 rounded-lg shadow-soft" />
+          <LogoMark src={settings?.logoImage} className="h-9 w-9 rounded-lg shadow-soft sm:h-10 sm:w-10" />
           <span>
-            <span className="block text-lg font-extrabold leading-none text-navy sm:text-xl">{agencyName}</span>
+            <span className="block text-base font-extrabold leading-none text-navy sm:text-xl">{agencyName}</span>
             <span className="hidden text-[11px] font-bold uppercase text-slate-500 sm:block">{tagline}</span>
           </span>
         </a>
@@ -117,9 +117,9 @@ function Navbar({ settings, sections }) {
           type="button"
           aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
           onClick={() => setOpen((value) => !value)}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-navy lg:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-navy shadow-sm lg:hidden"
         >
-          {open ? <X size={22} /> : <Menu size={22} />}
+          {open ? <X size={21} /> : <Menu size={21} />}
         </button>
       </nav>
 

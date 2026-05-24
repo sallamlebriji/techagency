@@ -151,24 +151,24 @@ function Hero({ settings }) {
   const logoImage = settings?.logoImage;
 
   return (
-    <section id="accueil" className="relative scroll-mt-24 overflow-hidden bg-cloud pt-28 sm:pt-32">
+    <section id="accueil" className="relative scroll-mt-20 overflow-hidden bg-cloud pt-24 sm:scroll-mt-24 sm:pt-32">
       <div className="absolute inset-0 hero-dots opacity-70" />
       <div className="absolute inset-x-0 top-0 h-56 bg-white" />
 
-      <div className="container-shell relative grid items-center gap-12 pb-16 lg:grid-cols-[1.02fr_0.98fr] lg:pb-24">
+      <div className="container-shell relative grid items-center gap-9 pb-14 sm:gap-12 sm:pb-16 lg:grid-cols-[1.02fr_0.98fr] lg:pb-24">
         <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
           <span className="eyebrow bg-white">
             <Sparkles size={14} />
             {heroEyebrow}
           </span>
-          <h1 className="mt-6 max-w-4xl font-display text-4xl font-bold leading-tight text-navy sm:text-5xl lg:text-6xl">
+          <h1 className="mt-5 max-w-4xl font-display text-[2.25rem] font-bold leading-[1.08] text-navy sm:mt-6 sm:text-5xl lg:text-6xl">
             {heroTitle}
           </h1>
-          <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
+          <p className="mt-5 max-w-3xl text-base leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-8">
             {heroDescription}
           </p>
 
-          <div className="mt-9 flex flex-col gap-4 sm:flex-row">
+          <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row sm:gap-4">
             <a href="#contact" className="primary-button">
               {primaryCta}
               <ArrowRight size={18} />
@@ -178,11 +178,11 @@ function Hero({ settings }) {
             </a>
           </div>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-3 lg:max-w-3xl">
+          <div className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-3 sm:gap-4 lg:max-w-3xl">
             {heroStats.map((stat) => (
-              <div key={stat.label} className="rounded-lg border border-slate-200 bg-white/90 p-5 shadow-sm backdrop-blur">
+              <div key={stat.label} className="rounded-lg border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur sm:p-5">
                 <ShieldCheck size={20} className="text-cyan" />
-                <p className="mt-4 text-2xl font-extrabold text-navy">{stat.value}</p>
+                <p className="mt-3 text-xl font-extrabold text-navy sm:mt-4 sm:text-2xl">{stat.value}</p>
                 <p className="mt-1 text-sm font-semibold text-slate-600">{stat.label}</p>
                 <span className="mt-3 block h-1 w-10 rounded-md bg-cyan" />
               </div>
