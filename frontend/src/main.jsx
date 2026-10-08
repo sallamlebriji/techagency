@@ -4,6 +4,8 @@ import App from './App.jsx';
 import './cms/base.css';
 import './cms/cms.css';
 import './cms/studio.css';
+import './cms/editorial.css';
+import './cms/service-detail.css';
 const root=document.getElementById('root');
 const element=<React.StrictMode><App/></React.StrictMode>;
 if(root.hasChildNodes()&&window.__INNOVIA_CONTENT__)hydrateRoot(root,element);else createRoot(root).render(element);

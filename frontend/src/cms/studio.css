@@ -61,3 +61,25 @@
 @media(prefers-reduced-motion:reduce){.expertise-marquee-mask{mask-image:none}.expertise-marquee-track{animation:none;width:100%;will-change:auto}.expertise-marquee-group{min-width:0;width:100%;flex-wrap:wrap;justify-content:center;gap:15px;padding:24px}.expertise-marquee-group[aria-hidden=true],.expertise-marquee-toggle{display:none}.expertise-marquee-item{padding:0;gap:15px;font-size:12px}.expertise-marquee-item b{animation:none}.expertise-marquee-item:last-child b{display:none}}
 .studio-web-link{display:block;height:100%;width:100%}.studio-web a.studio-web-caption{color:white}.studio-web-caption>span{display:flex;align-items:center;gap:5px;margin-left:auto;padding-right:90px;white-space:nowrap}.studio-web-link:focus-visible{outline-offset:-4px!important}.studio-web-caption:focus-visible{outline-offset:-3px!important}
 @media(max-width:600px){.studio-web-caption>span{padding-right:60px;font-size:5px;gap:2px}.studio-web-caption>span svg{width:8px}}
+/* Real website previews, managed with each sector in the CMS. */
+.sector-sites{grid-template-columns:minmax(220px,.6fr) minmax(0,1.4fr);gap:36px}
+.sector-site-preview{min-width:0;padding:24px;gap:23px}
+.sector-site-heading{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.sector-site-heading .eyebrow{font-size:8px;margin-bottom:7px}
+.sector-site-heading h3{font-family:var(--heading-font);font-size:34px;line-height:1.1}
+.sector-site-heading .text-link{flex-shrink:0;font-size:11px}
+.sector-site-browser{display:block;min-width:0;border-radius:12px;overflow:hidden;background:white;box-shadow:0 15px 35px #173b311a;transition:transform .25s}
+.sector-site-browser:hover{transform:translateY(-3px)}
+.sector-site-browser img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;object-position:top}
+.sector-site-browser .studio-windowbar>span:nth-child(2){min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:900px){.sector-sites{grid-template-columns:1fr;gap:20px}.sector-site-preview{grid-template-columns:1fr;padding:22px}.sector-sites .sector-selector{flex-wrap:wrap}.sector-site-heading h3{font-size:32px}}
+@media(max-width:600px){.sector-site-preview{padding:16px;gap:18px}.sector-site-heading{gap:12px;align-items:flex-end}.sector-site-heading h3{font-size:26px}.sector-site-heading .text-link{font-size:9px;gap:5px}.sector-site-heading .text-link svg{width:13px}.sector-site-browser{border-radius:8px}}
+
+/* Concise home service cards; full descriptions remain on service pages. */
+.service-card.service-card-compact{display:grid;grid-template-columns:1fr auto;align-content:start;align-items:center;gap:23px 18px;min-height:190px;padding:28px}
+.service-card-compact .service-icon{justify-self:start;margin:0;grid-column:1}
+.service-card-compact .card-index{top:31px;right:28px}
+.service-card-compact h3{grid-column:1;max-width:270px;font-size:19px;line-height:1.4}
+.service-card-compact .card-more{grid-column:2;grid-row:2;border:0;padding:0;align-self:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#ffffffb0}
+.service-card-compact:hover .card-more{background:var(--brand);color:var(--on-brand)}
+@media(max-width:600px){.service-card.service-card-compact{min-height:0;grid-template-columns:44px 1fr 26px;gap:17px;padding:24px}.service-card-compact .service-icon{padding:10px;border-radius:12px}.service-card-compact .service-icon svg{width:21px;height:21px}.service-card-compact h3{grid-column:2;font-size:16px}.service-card-compact .card-index{display:none}.service-card-compact .card-more{grid-column:3;grid-row:1;width:26px;height:26px}}
