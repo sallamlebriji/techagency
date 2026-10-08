@@ -1,0 +1,13 @@
+import dotenv from 'dotenv';
+import path from 'node:path';
+const root=path.resolve(import.meta.dirname,'../..');
+dotenv.config({path:path.join(root,'backend/.env.local'),quiet:true});
+dotenv.config({path:path.join(root,'backend/.env'),quiet:true});
+dotenv.config({path:path.join(root,'.env'),quiet:true});
+const {createCms,errorHandler}=await import('./cms.js');
+const {siteRoutes}=await import('./serve-site.js');
+const app=await createCms();
+siteRoutes(app);
+app.use(errorHandler);
+const port=Number(process.env.PORT||4000);
+app.listen(port,process.env.HOST||'127.0.0.1',()=>console.log(`INNOVIA API et CMS : http://127.0.0.1:${port}`));
