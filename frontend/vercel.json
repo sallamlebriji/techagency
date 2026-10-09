@@ -2,19 +2,19 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://ton-backend.onrender.com/api/:path*"
+      "destination": "https://techagency.onrender.com/api/:path*"
     },
     {
       "source": "/uploads/:path*",
-      "destination": "https://ton-backend.onrender.com/uploads/:path*"
+      "destination": "https://techagency.onrender.com/uploads/:path*"
     },
     {
       "source": "/sitemap.xml",
-      "destination": "https://ton-backend.onrender.com/sitemap.xml"
+      "destination": "https://techagency.onrender.com/sitemap.xml"
     },
     {
       "source": "/robots.txt",
-      "destination": "https://ton-backend.onrender.com/robots.txt"
+      "destination": "https://techagency.onrender.com/robots.txt"
     },
     {
       "source": "/(.*)",
