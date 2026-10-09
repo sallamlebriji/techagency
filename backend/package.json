@@ -1,12 +1,13 @@
 {
-  "name": "techagency-backend",
+  "name": "innovia-backend",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "node src/index.js",
     "start": "node src/index.js",
-    "create-admin": "node src/createAdminUser.js"
+    "create-admin": "node src/createAdminUser.js",
+    "seed:admin": "node scripts/seed-admin.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

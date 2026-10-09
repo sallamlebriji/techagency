@@ -1,4 +1,5 @@
-import {useState} from 'react';
+import {useExperience} from './ExperienceContext.jsx';
+import {useEffect,useRef,useState} from 'react';
 import {ArrowUpRight,ChevronLeft,ChevronRight,Pause,Play} from 'lucide-react';
 import './journey.css';
 
@@ -35,11 +36,24 @@ function JourneyIllustration({stage}) {
 }
 
 export default function ProjectJourney({steps=[]}) {
+  const experience=useExperience();
   const [index,setIndex]=useState(0);
   const [paused,setPaused]=useState(false);
+  const journeyRef=useRef(null);
+  useEffect(()=>{
+    if(paused||!experience.journeyAuto||steps.length<2)return;
+    const timer=window.setInterval(()=>{
+      const journey=journeyRef.current;
+      if(!journey||document.hidden||window.matchMedia('(prefers-reduced-motion: reduce)').matches||journey.closest('.no-motion'))return;
+      const bounds=journey.getBoundingClientRect();
+      if(bounds.bottom<=0||bounds.top>=window.innerHeight)return;
+      setIndex(current=>(current+1)%steps.length);
+    },experience.journeySeconds*1000);
+    return()=>window.clearInterval(timer);
+  },[paused,index,steps.length,experience.journeyAuto,experience.journeySeconds]);
   if(!steps.length)return null;
   const n=Math.min(index,steps.length-1),step=steps[n];
-  return <div className="project-journey creative-journey" data-paused={paused}>
+  return <div ref={journeyRef} className="project-journey creative-journey" data-paused={paused}>
     <div className="journey-track" role="group" aria-label="Étapes du projet">
       {steps.map((s,i)=><button key={i} onClick={()=>setIndex(i)} aria-pressed={i===n} aria-controls="journey-panel" className={i<n?'completed':''}><span>{String(i+1).padStart(2,'0')}</span><strong>{s.title}</strong><i/></button>)}
     </div>
@@ -47,6 +61,6 @@ export default function ProjectJourney({steps=[]}) {
       <div className="journey-copy" aria-live="polite" aria-atomic="true"><span className="eyebrow">Étape {String(n+1).padStart(2,'0')} / {String(steps.length).padStart(2,'0')}</span><h3>{step.title}</h3><p>{step.body}</p><span className="journey-copy-mark" aria-hidden="true"><ArrowUpRight size={20}/> Chaque étape fait avancer votre idée.</span></div>
       <JourneyIllustration stage={n%4}/>
     </div>
-    <div className="journey-controls"><span>Un projet construit ensemble, étape par étape.</span><button className="journey-pause" aria-label={paused?'Reprendre l’animation':'Mettre en pause l’animation'} aria-pressed={paused} onClick={()=>setPaused(!paused)}>{paused?<Play size={16}/>:<Pause size={16}/>}</button><button aria-label="Étape précédente" disabled={n===0} onClick={()=>setIndex(n-1)}><ChevronLeft size={18}/></button><button aria-label="Étape suivante" disabled={n===steps.length-1} onClick={()=>setIndex(n+1)}><ChevronRight size={18}/></button></div>
+    <div className="journey-controls"><span>{experience.journeyFooter}</span><button className="journey-pause" aria-label={paused?'Reprendre l’animation':'Mettre en pause l’animation'} aria-pressed={paused} onClick={()=>setPaused(!paused)}>{paused?<Play size={16}/>:<Pause size={16}/>}</button><button aria-label="Étape précédente" disabled={n===0} onClick={()=>setIndex(n-1)}><ChevronLeft size={18}/></button><button aria-label="Étape suivante" disabled={n===steps.length-1} onClick={()=>setIndex(n+1)}><ChevronRight size={18}/></button></div>
   </div>;
 }

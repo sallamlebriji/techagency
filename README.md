@@ -34,7 +34,7 @@ Les éléments en état Brouillon sont exclus de la publication. L’éditeur pr
 
 ## Configuration
 
-Copier `.env.example` vers `backend/.env.local` et renseigner uniquement les valeurs nécessaires. Ordre de chargement : variables du processus, `backend/.env.local`, `backend/.env`, `.env`. Ne jamais committer ces secrets.
+Copier `backend/.env.example` vers `backend/.env.local` et renseigner uniquement les valeurs nécessaires. Ordre de chargement : variables du processus, `backend/.env.local`, `backend/.env`, `.env`. Ne jamais committer ces secrets.
 
 SQLite est utilisé si MONGODB_URI est vide. Avec MongoDB, la collection `cms_documents` stocke les mêmes documents et applique un index unique bucket/key. Au premier démarrage, les anciennes données reconnues sont importées sans supprimer les anciennes collections ; leur configuration est archivée dans le stockage privé. Vérifier les contenus importés avant publication. Le scénario MongoDB n’a pas été exécuté dans cette recette locale.
 
@@ -68,4 +68,12 @@ Pour une sauvegarde complète SQLite, arrêter le processus proprement puis copi
 
 Coordonnées finales INNOVIA, identité légale et politique de conservation, contenus commerciaux validés, domaine et SMTP. Le compte local sert au démarrage. Le projet n’est pas déployé sur un hébergement public par cette intervention.
 
-Voir `docs/RECETTE-CMS.md` pour la validation. L’ancienne expérience immersive est conservée dans `frontend/src/LegacyApp.jsx` et `backend/src/legacy-index.js` à titre d’archive ; elle n’est plus le point d’entrée.
+Les tests d’intégration CMS vérifient les brouillons, la publication, les permissions, les médias et la persistance.
+
+## Structure du projet
+
+- `frontend/` : site React, administration CMS, styles et médias publics.
+- `backend/` : API Express, stockage, migrations et scripts de compilation/tests.
+- `shared/` : modèles de contenu utilisés par le frontend et le backend.
+- `package.json` et `package-lock.json` : commandes et dépendances des deux workspaces.
+- `backend/.env.example` : exemple de configuration ; les fichiers `.env` locaux restent privés.

@@ -1,6 +1,8 @@
+import {useExperience} from './ExperienceContext.jsx';
 import {useState} from 'react';
 import {ArrowUpRight,ArrowRight,Monitor,Smartphone,Check,Layers,MousePointer2,Route,Braces,ShieldCheck,Sparkles,Plus,LayoutGrid,CalendarDays,Folder,ChevronRight} from 'lucide-react';
 import {hrefFor} from '../../../shared/content.js';
+import ServiceInnovation from './ServiceInnovation.jsx';
 
 const directions={apps:['Votre idée.','Une expérience vivante.'],web:['Votre présence.','Une nouvelle dimension.'],saas:['Vos équipes.','Un espace commun.'],ai:['Vos données.','De nouvelles possibilités.'],automation:['Vos outils.','Enfin connectés.'],support:['Votre projet.','Toujours en mouvement.']};
 const featureIcons=[Route,Layers,Braces,ShieldCheck];
@@ -37,14 +39,15 @@ function FeatureArt({index}){
 }
 
 export default function ServiceDetail({entry,content,children}){
- const line=directions[entry.id]||['Votre ambition.','Notre savoir-faire.'];
+ const experience=useExperience(),innovation=entry.innovation||entry.id;
+ const line=directions[innovation]||['Votre ambition.','Notre savoir-faire.'];
  const related=content.services.filter(x=>x.id!==entry.id).slice(0,3);
  return <div className="sd-page wrap">
   <nav className="sd-breadcrumb" aria-label="Fil d’Ariane"><a href="/">Accueil</a><ChevronRight size={12}/><a href="/services">Services</a><ChevronRight size={12}/><span>{entry.title}</span></nav>
   <section className="sd-hero">
    <div className="sd-hero-grid" aria-hidden="true"/>
-   <header className="sd-hero-copy"><span className="sd-kicker"><i/>DESIGN · DÉVELOPPEMENT · EXPÉRIENCE</span><h1>{entry.title}</h1><p>{entry.summary}</p><a className="sd-primary" href="/contact">Donnons vie à votre projet <ArrowUpRight size={18}/></a><div className="sd-hero-foot"><span>CONÇU AUTOUR DE VOUS</span><span aria-hidden="true">↘</span></div></header>
-   {entry.image?<figure className="sd-custom-image"><img src={entry.image} alt={entry.imageAlt||entry.title}/></figure>:<InterfaceScene name={content.identity.name}/>}
+   <header className="sd-hero-copy"><span className="sd-kicker"><i/>DESIGN · DÉVELOPPEMENT · EXPÉRIENCE</span><h1>{entry.title}</h1><p>{entry.summary}</p><a className="sd-primary" href="/contact">{experience.serviceCta} <ArrowUpRight size={18}/></a><div className="sd-hero-foot"><span>CONÇU AUTOUR DE VOUS</span><span aria-hidden="true">↘</span></div></header>
+   {entry.image?<figure className="sd-custom-image"><img src={entry.image} alt={entry.imageAlt||entry.title}/></figure>:!experience.serviceArt?null:innovation==='apps'?<InterfaceScene name={content.identity.name}/>:<ServiceInnovation key={entry.id} service={innovation} name={content.identity.name}/>}
   </section>
   <section className="sd-capabilities">
    <div className="sd-section-title"><span className="eyebrow">Du concept au concret</span><h2>{line[0]}<br/><em>{line[1]}</em></h2><span className="sd-section-symbol" aria-hidden="true">✳</span></div>
