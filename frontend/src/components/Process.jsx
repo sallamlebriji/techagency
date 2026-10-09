@@ -1,102 +1,22 @@
-import { motion } from 'framer-motion';
-import { CheckCircle2, ClipboardList, Code2, PenTool, Rocket, Settings } from 'lucide-react';
-
-const defaultSteps = [
-  {
-    title: 'Analyse du besoin',
-    description: 'Audit, objectifs, utilisateurs, contraintes, priorites metier et perimetre fonctionnel.',
-    icon: ClipboardList,
-  },
-  {
-    title: 'Conception UI/UX',
-    description: 'Parcours, maquettes, experience utilisateur, structure des ecrans et validation du concept.',
-    icon: PenTool,
-  },
-  {
-    title: 'Developpement',
-    description: 'Architecture, developpement frontend/backend, integrations et gestion des donnees.',
-    icon: Code2,
-  },
-  {
-    title: 'Test et validation',
-    description: 'Tests fonctionnels, securite, performance, correction des anomalies et recette client.',
-    icon: CheckCircle2,
-  },
-  {
-    title: 'Deploiement',
-    description: 'Mise en production, cloud, CI/CD, configuration, sauvegardes et monitoring.',
-    icon: Rocket,
-  },
-  {
-    title: 'Amelioration continue',
-    description: 'Maintenance, support, nouvelles fonctionnalites et optimisation selon les retours terrain.',
-    icon: Settings,
-  },
+import { useEffect, useRef } from 'react';
+import { useReducedMotion } from 'framer-motion';
+import CinematicMedia from './CinematicMedia.jsx';
+const steps=[
+ {title:'Analyse du besoin',text:'Audit, objectifs, utilisateurs, contraintes et priorités métier. Nous définissons le périmètre fonctionnel ensemble.'},
+ {title:'Conception UI/UX',text:'Parcours, maquettes et structure des écrans. Le concept est validé avant le développement.'},
+ {title:'Développement',text:'Architecture, frontend, backend, intégrations et gestion des données. La vision devient un produit.'},
+ {title:'Test et validation',text:'Tests fonctionnels, sécurité, performance, correction des anomalies et recette client.'},
+ {title:'Déploiement',text:'Mise en production, configuration cloud, sauvegardes et monitoring.'},
+ {title:'Amélioration continue',text:'Maintenance, support et nouvelles fonctionnalités selon les retours du terrain.'},
 ];
-
-function parseItems(value, fallback) {
-  const lines = String(value || '')
-    .split('\n')
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  if (lines.length === 0) return fallback;
-
-  return lines.map((line) => {
-    const [title, ...descriptionParts] = line.split('|').map((part) => part.trim());
-    return {
-      title,
-      description: descriptionParts.join(' | ') || 'Description a modifier depuis l espace admin.',
-    };
-  });
+export default function Process({settings={}}) {
+ const configuredSteps = settings.processItems?.split('\n').filter(Boolean).map(line => {const [title,...text]=line.split('|');return {title,text:text.join(' | ')};});
+ const displayedSteps = configuredSteps?.length ? configuredSteps : steps;
+ const section=useRef(null);const reduced=useReducedMotion();
+ useEffect(()=>{let cancelled=false;let context;if(!reduced) Promise.all([import('gsap'),import('gsap/ScrollTrigger')]).then(([{gsap},{ScrollTrigger}])=>{if(cancelled)return;gsap.registerPlugin(ScrollTrigger);context=gsap.context(()=>{gsap.from('.assembly-piece',{y:index=>index<2?-35:35,opacity:.15,stagger:.12,ease:'none',scrollTrigger:{trigger:section.current,start:'top 80%',end:'bottom 70%',scrub:.6}});},section);});return()=>{cancelled=true;context?.revert();};},[reduced]);
+ return <section ref={section} id="processus" className="studio-process section-padding scroll-mt-20"><div className="container-shell">
+ <div className="studio-section-heading"><span className="studio-kicker">03 / La méthode</span><h2>{settings.processTitle || <>De l’intuition<br/><em>à la réalisation.</em></>}</h2><p>{settings.processDescription || 'Un parcours lisible, des échanges réguliers et des décisions partagées. Chaque étape construit la suivante.'}</p></div>
+ <div className="method-layout"><div className="method-assembly" aria-hidden="true"><svg viewBox="0 0 300 360"><defs><linearGradient id="assembly-metal" x2="1" y2="1"><stop stopColor="#e8e3da"/><stop offset=".5" stopColor="#8c8c88"/><stop offset="1" stopColor="#c3c0b8"/></linearGradient></defs><rect className="assembly-piece" x="58" y="40" width="90" height="35" rx="4" fill="url(#assembly-metal)"/><rect className="assembly-piece" x="152" y="40" width="90" height="35" rx="4" fill="url(#assembly-metal)"/><rect className="assembly-piece" x="133" y="79" width="34" height="202" rx="4" fill="#c4a16a"/><rect className="assembly-piece" x="58" y="285" width="90" height="35" rx="4" fill="url(#assembly-metal)"/><rect className="assembly-piece" x="152" y="285" width="90" height="35" rx="4" fill="url(#assembly-metal)"/></svg><span>L’IDÉE DEVIENT UN ENSEMBLE.</span></div><ol className="method-steps">{displayedSteps.map((step,index)=><li key={step.title}><span>{String(index+1).padStart(2,'0')}</span><div><h3>{step.title}</h3><p>{step.text}</p></div></li>)}</ol></div>
+ <div className="method-next"><p>Un périmètre clair. Une réalisation accompagnée.</p><a className="studio-text-link" href="#offres">Trouver l’offre adaptée ↗</a></div>
+ <CinematicMedia name="materials"/></div></section>;
 }
-
-function Process({ settings = {} }) {
-  const steps = parseItems(settings.processItems, defaultSteps);
-
-  return (
-    <section id="processus" className="section-padding scroll-mt-24 bg-white">
-      <div className="container-shell">
-        <div className="mx-auto max-w-3xl text-center">
-          <span className="eyebrow">{settings.processEyebrow || 'Processus'}</span>
-          <h2 className="section-title mx-auto">
-            {settings.processTitle || 'Une methode structuree pour livrer sans improvisation.'}
-          </h2>
-          <p className="section-subtitle mx-auto">
-            {settings.processDescription ||
-              'Nous combinons cadrage produit, rigueur technique et cycles courts pour garder le projet lisible, maitrise et oriente resultat.'}
-          </p>
-        </div>
-
-        <div className="relative mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {steps.map((step, index) => {
-            const Icon = step.icon || defaultSteps[index % defaultSteps.length]?.icon || CheckCircle2;
-            return (
-              <motion.article
-                key={`${step.title}-${index}`}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ duration: 0.45, delay: index * 0.05 }}
-                className="premium-card p-6"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-navy text-cyan">
-                    <Icon size={23} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-extrabold uppercase text-cyan">Etape {index + 1}</p>
-                    <h3 className="mt-2 text-lg font-extrabold text-navy">{step.title}</h3>
-                    <p className="mt-3 text-sm leading-7 text-slate-600">{step.description}</p>
-                  </div>
-                </div>
-              </motion.article>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export default Process;

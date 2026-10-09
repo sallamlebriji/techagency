@@ -21,6 +21,7 @@ function readEnvPort(filePath) {
 
 const backendPort =
   process.env.PORT ||
+  readEnvPort(path.resolve(__dirname, '../backend/.env.local')) ||
   readEnvPort(path.resolve(__dirname, '../backend/.env')) ||
   readEnvPort(path.resolve(__dirname, '../.env')) ||
   '4000';
@@ -28,8 +29,16 @@ const backendPort =
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: '127.0.0.1',
+    fs: {
+      allow: [__dirname, path.resolve(__dirname, '../shared'), path.resolve(__dirname, '../node_modules')],
+      deny: ['**/.env*', '**/*.sqlite*', '**/.local-admin.txt', '**/backend/**'],
+    },
     proxy: {
       '/api': `http://127.0.0.1:${backendPort}`,
+      '/uploads': `http://127.0.0.1:${backendPort}`,
+      '/sitemap.xml': `http://127.0.0.1:${backendPort}`,
+      '/robots.txt': `http://127.0.0.1:${backendPort}`,
     },
   },
 });

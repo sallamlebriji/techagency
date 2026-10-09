@@ -32,7 +32,7 @@ function Audiences({ settings = {} }) {
         <div className="mx-auto max-w-4xl text-center">
           <span className="eyebrow bg-cyan/15">{settings.audiencesEyebrow || 'Pour qui ?'}</span>
           <h2 className="section-title mx-auto">
-            {settings.audiencesTitle || 'TechAgency accompagne les organisations qui veulent passer a un niveau superieur.'}
+            {settings.audiencesTitle || 'INNOVIA accompagne les organisations qui veulent passer a un niveau superieur.'}
           </h2>
           <p className="section-subtitle mx-auto">
             {settings.audiencesDescription ||
@@ -52,8 +52,8 @@ function Audiences({ settings = {} }) {
               <Cpu className="h-3.5 w-3.5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
             </span>
             <span>
-              <span className="block max-w-full break-words font-display text-sm font-bold leading-none text-navy sm:whitespace-nowrap sm:text-2xl lg:text-3xl">{settings.agencyName || 'TechAgency'}</span>
-              <span className="mt-1 block text-[0.42rem] font-extrabold uppercase leading-tight text-cyan sm:text-[0.65rem] lg:text-xs">{settings.tagline || 'Software & AI Studio'}</span>
+              <span className="block max-w-full break-words font-display text-sm font-bold leading-none text-navy sm:whitespace-nowrap sm:text-2xl lg:text-3xl">{settings.agencyName || 'INNOVIA'}</span>
+              <span className="mt-1 block text-[0.42rem] font-extrabold uppercase leading-tight text-cyan sm:text-[0.65rem] lg:text-xs">{settings.tagline || 'Solutions digitales • Intelligence artificielle'}</span>
             </span>
           </div>
 

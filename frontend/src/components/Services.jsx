@@ -1,102 +1,23 @@
-import { motion } from 'framer-motion';
-import { CheckCircle2 } from 'lucide-react';
+import CinematicMedia from './CinematicMedia.jsx';
+import { useEffect, useRef, useState } from 'react';
+import { useReducedMotion } from 'framer-motion';
+import { ArrowUpRight } from 'lucide-react';
+import SculptureView from './SculptureView.jsx';
 import { services } from '../data/services.js';
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (index) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.45, delay: index * 0.05 },
-  }),
-};
-
-const defaultProofPoints = [
-  'Architecture scalable et maintenable',
-  'Interfaces sobres, rapides et orientees conversion',
-  'Deploiement securise avec support continu',
+const disciplines = [
+ {title:'Sites web & e-commerce',description:'Une présence singulière, conçue pour faire découvrir votre marque et transformer l’intérêt en action.',tags:'Sites vitrines / E-commerce / Expériences web'},
+ {title:'Applications web & mobiles',description:'Des interfaces fluides et des outils fiables, au plus près de vos utilisateurs et de leurs besoins.',tags:'Applications métier / Portails / Mobile'},
+ {title:'SaaS & outils de gestion',description:'Des plateformes pensées autour de vos processus. Une architecture qui accompagne votre croissance.',tags:'SaaS / CRM & ERP / Tableaux de bord'},
+ {title:'Intelligence artificielle',description:'Des assistants et des automatisations utiles, intégrés à vos données et à votre quotidien.',tags:'Assistants IA / Workflows / Analyse de données'},
+ {title:'Identité visuelle & design',description:'Une direction claire, une identité cohérente et des expériences dont chaque détail porte votre marque.',tags:'Identité / UI & UX / Design systems'},
 ];
-
-function splitLines(value, fallback) {
-  const lines = String(value || '')
-    .split('\n')
-    .map((item) => item.trim())
-    .filter(Boolean);
-  return lines.length > 0 ? lines : fallback;
+export default function Services({settings={}}) {
+ const [active,setActive]=useState(0); const section=useRef(null); const reduced=useReducedMotion();
+ useEffect(()=>{let cancelled=false;let context;if(!reduced) Promise.all([import('gsap'),import('gsap/ScrollTrigger')]).then(([{gsap},{ScrollTrigger}])=>{if(cancelled)return;gsap.registerPlugin(ScrollTrigger);context=gsap.context(()=>{section.current.querySelectorAll('.discipline').forEach((row,index)=>{ScrollTrigger.create({trigger:row,start:'top 55%',end:'bottom 55%',onEnter:()=>setActive(index),onEnterBack:()=>setActive(index)});});},section);});return()=>{cancelled=true;context?.revert();};},[reduced]);
+ const technicalItems=settings.servicesItems?settings.servicesItems.split('\n').filter(Boolean).map(line=>{const [title,...description]=line.split('|');return {title,description:description.join(' ')};}):services;
+ return <section ref={section} id="services" className="studio-services section-padding scroll-mt-20"><div className="container-shell">
+ <div className="studio-section-heading"><span className="studio-kicker">01 / Nos expertises</span><h2>{settings.servicesTitle || <>Des compétences distinctes.<br/><em>Une vision commune.</em></>}</h2><p>{settings.servicesDescription || 'Chaque pièce a sa fonction. Ensemble, elles donnent forme à votre prochain projet digital.'}</p></div>
+ <div className="services-story"><div className="services-art"><SculptureView mode="services" light active={active}/><div className="sculpture-selector" role="group" aria-label="Explorer les pièces de la sculpture">{disciplines.map((item,index)=><button type="button" key={item.title} aria-label={item.title} aria-pressed={active===index} onClick={()=>setActive(index)}>{String(index+1).padStart(2,'0')}</button>)}</div><p className="services-active-label"><span>{String(active+1).padStart(2,'0')}</span> {disciplines[active].title}</p></div><div className="services-disciplines">{disciplines.map((item,index)=><article className={`discipline ${active===index?'is-active':''}`} key={item.title} onMouseEnter={()=>setActive(index)} onFocus={()=>setActive(index)}><span className="discipline-number">0{index+1}</span><div><h3>{item.title}</h3><p>{item.description}</p><small>{item.tags}</small><a className="studio-text-link" href="#contact">Imaginer votre solution<ArrowUpRight size={15}/></a></div></article>)}</div></div>
+ <details className="studio-details"><summary>Explorer notre expertise technique</summary><div className="technical-list">{technicalItems.map((item,index)=><div key={index}><h3>{item.title}</h3><p>{item.description}</p></div>)}</div></details>
+ <CinematicMedia name="sculpturePov"/></div></section>;
 }
-
-function parseItems(value, fallback) {
-  const items = splitLines(value, []);
-  if (items.length === 0) return fallback;
-
-  return items.map((line) => {
-    const [title, ...descriptionParts] = line.split('|').map((part) => part.trim());
-    return {
-      title,
-      description: descriptionParts.join(' | ') || 'Description a modifier depuis l espace admin.',
-    };
-  });
-}
-
-function Services({ settings = {} }) {
-  const serviceItems = parseItems(settings.servicesItems, services);
-  const proofPoints = splitLines(settings.servicesProofPoints, defaultProofPoints);
-
-  return (
-    <section id="services" className="section-padding scroll-mt-24 bg-white">
-      <div className="container-shell">
-        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
-          <div>
-            <span className="eyebrow">{settings.servicesEyebrow || 'Services'}</span>
-            <h2 className="section-title">
-              {settings.servicesTitle || 'Une expertise complete pour concevoir des solutions fiables et differenciantes.'}
-            </h2>
-          </div>
-          <p className="text-base leading-8 text-slate-600 sm:text-lg">
-            {settings.servicesDescription ||
-              'TechAgency accompagne chaque decision produit et technique : cadrage, design, developpement, integration, deploiement, securite et amelioration continue.'}
-          </p>
-        </div>
-
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {serviceItems.map((service, index) => {
-            const Icon = service.icon || services[index % services.length]?.icon || CheckCircle2;
-            return (
-              <motion.article
-                key={`${service.title}-${index}`}
-                variants={cardVariants}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.2 }}
-                custom={index}
-                className="premium-card group relative overflow-hidden p-6"
-              >
-                <div className="absolute inset-x-0 top-0 h-1 bg-cyan opacity-0 transition group-hover:opacity-100" />
-                <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-cyan/10 opacity-0 transition duration-300 group-hover:opacity-100" />
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-navy text-cyan shadow-sm transition group-hover:bg-cyan group-hover:text-navy">
-                    <Icon size={24} />
-                  </div>
-                  <span className="text-sm font-extrabold text-slate-300">{String(index + 1).padStart(2, '0')}</span>
-                </div>
-                <h3 className="mt-6 text-lg font-extrabold text-navy">{service.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">{service.description}</p>
-              </motion.article>
-            );
-          })}
-        </div>
-
-        <div className="mt-10 grid gap-4 border-t border-slate-200 pt-8 md:grid-cols-3">
-          {proofPoints.map((item) => (
-            <div key={item} className="flex items-center gap-3 text-sm font-extrabold text-navy">
-              <CheckCircle2 size={22} className="shrink-0 text-cyan" />
-              {item}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export default Services;

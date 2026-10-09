@@ -2,7 +2,7 @@ import { LoaderCircle, Wrench } from 'lucide-react';
 import LogoMark from './LogoMark.jsx';
 
 function Maintenance({ settings }) {
-  const agencyName = settings?.agencyName || 'TechAgency';
+  const agencyName = settings?.agencyName || 'INNOVIA';
   const email = settings?.email || 'contact@techagency.ma';
 
   return (

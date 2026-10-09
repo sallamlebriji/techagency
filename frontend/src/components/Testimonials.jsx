@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Quote } from 'lucide-react';
 
 const defaultTestimonials = [
-  'Amine El Fassi|Directeur general|Atlas Retail|TechAgency a transforme notre gestion commerciale avec une plateforme claire, rapide et parfaitement adaptee a nos equipes.',
+  'Amine El Fassi|Directeur general|Atlas Retail|INNOVIA a transforme notre gestion commerciale avec une plateforme claire, rapide et parfaitement adaptee a nos equipes.',
   'Sara Benali|Responsable operations|MedBooking|L accompagnement a ete tres professionnel, de la conception UI/UX au deploiement.',
   'Youssef Rahmani|Fondateur|SmartSupport AI|Ils ont livre un chatbot IA connecte a nos donnees internes avec une excellente qualite technique.',
 ];

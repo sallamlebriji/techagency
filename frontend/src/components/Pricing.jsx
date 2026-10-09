@@ -35,7 +35,7 @@ function normalizeOffer(offer, index) {
     price: offer.price,
     popular: String(offer.status || '').toLowerCase().includes('populaire'),
     description: offer.description || 'Offre configurable depuis l espace admin.',
-    features: Array.isArray(offer.features) ? offer.features : featureLines.length > 0 ? featureLines : ['Perimetre configurable', 'Accompagnement TechAgency', 'Mise en ligne securisee'],
+    features: Array.isArray(offer.features) ? offer.features : featureLines.length > 0 ? featureLines : ['Perimetre configurable', 'Accompagnement INNOVIA', 'Mise en ligne securisee'],
   };
 }
 
@@ -77,7 +77,7 @@ function parseEstimatorItems(value) {
       const [name, basePrice, description] = line.split('|').map((part) => part?.trim());
       const parsedPrice = Number(basePrice);
       if (!name || !Number.isFinite(parsedPrice) || parsedPrice <= 0) return null;
-      return { name, basePrice: parsedPrice, description: description || 'Projet digital configure depuis TechAgency.' };
+      return { name, basePrice: parsedPrice, description: description || 'Projet digital configure depuis INNOVIA.' };
     })
     .filter(Boolean);
 
@@ -117,7 +117,8 @@ function formatPrice(value, currency) {
 }
 
 function Pricing({ offers, settings = {} }) {
-  const displayedPacks = Array.isArray(offers) && offers.length > 0 ? offers.map(normalizeOffer) : packs;
+  const displayedPacks = Array.isArray(offers) ? offers.filter(offer=>offer.visible!==false).map(normalizeOffer) : packs;
+  const request = text => window.dispatchEvent(new CustomEvent('innovia:project-request', {detail:{text}}));
   const estimatorItems = parseEstimatorItems(settings.pricingEstimatorItems);
   const estimatorOptions = parseEstimatorOptions(settings.pricingEstimatorOptions);
   const complexityLevels = parseMultiplierItems(settings.pricingEstimatorComplexities, defaultComplexityLevels);
@@ -146,12 +147,12 @@ function Pricing({ offers, settings = {} }) {
   };
 
   return (
-    <section id="offres" className="section-padding scroll-mt-24 bg-cloud">
+    <section id="offres" className="studio-offers section-padding scroll-mt-24 bg-cloud">
       <div className="container-shell">
-        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
+        <div className="studio-section-heading">
           <div>
-            <span className="eyebrow">{settings.pricingEyebrow || 'Offres'}</span>
-            <h2 className="section-title">{settings.pricingTitle || 'Des packs simples pour cadrer rapidement votre projet.'}</h2>
+            <span className="studio-kicker">{settings.pricingEyebrow || '04 / Offres & estimation'}</span>
+            <h2>{settings.pricingTitle || <>Le bon point de départ.<br/><em>À votre mesure.</em></>}</h2>
           </div>
           <p className="text-base leading-8 text-slate-600 sm:text-lg">
             {settings.pricingDescription ||
@@ -159,7 +160,7 @@ function Pricing({ offers, settings = {} }) {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+        <div className="offer-grid">
           {displayedPacks.map((pack, index) => (
             <motion.article
               key={`${pack.name}-${index}`}
@@ -167,11 +168,9 @@ function Pricing({ offers, settings = {} }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.45, delay: index * 0.05 }}
-              className={`relative overflow-hidden rounded-lg border p-6 transition duration-300 hover:-translate-y-1 ${
-                pack.popular ? 'border-cyan bg-navy text-white shadow-premium' : 'border-slate-200 bg-white text-navy shadow-sm hover:shadow-premium'
-              }`}
+              className={`offer-card ${pack.popular ? 'offer-card-featured' : ''}`}
             >
-              <div className={`absolute inset-x-0 top-0 h-1 ${pack.popular ? 'bg-cyan' : 'bg-slate-100'}`} />
+              <span className="offer-index">{String(index+1).padStart(2,'0')} /</span>
               {pack.popular && <span className="absolute right-5 top-5 rounded-md bg-cyan px-3 py-1 text-xs font-extrabold text-navy">Populaire</span>}
               <p className="text-sm font-extrabold text-cyan">{pack.label}</p>
               <h3 className="mt-3 font-display text-2xl font-bold">{pack.name}</h3>
@@ -187,14 +186,14 @@ function Pricing({ offers, settings = {} }) {
                 ))}
               </div>
 
-              <a href="#contact" className={`mt-7 inline-flex w-full items-center justify-center rounded-lg px-5 py-3 text-sm font-extrabold transition hover:-translate-y-1 ${pack.popular ? 'bg-cyan text-navy hover:bg-white' : 'bg-navy text-white hover:bg-cyan hover:text-navy'}`}>
+              <a href="#contact" onClick={()=>request(`Je souhaite discuter de l’offre « ${pack.name} » (${pack.price}).`)} className="offer-cta">
                 {settings.pricingCta || 'Demander un devis'}
               </a>
             </motion.article>
           ))}
         </div>
 
-        <div className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-premium">
+        <div id="estimation" className="studio-estimator mt-8 overflow-hidden border border-slate-200 bg-white">
           <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
             <div className="bg-navy p-6 text-white sm:p-8">
               <span className="inline-flex items-center gap-2 rounded-md border border-cyan/40 bg-cyan/10 px-3 py-1 text-xs font-extrabold uppercase text-cyan">
@@ -211,7 +210,7 @@ function Pricing({ offers, settings = {} }) {
 
               <div className="mt-7 rounded-lg border border-white/10 bg-white/10 p-5">
                 <p className="text-sm font-extrabold uppercase text-cyan">Fourchette estimee</p>
-                <p className="mt-3 font-display text-3xl font-bold leading-tight">
+                <p aria-live="polite" className="estimate-value mt-3 font-display text-3xl font-bold leading-tight">
                   {formatPrice(lowEstimate, currency)} - {formatPrice(highEstimate, currency)}
                 </p>
                 <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
@@ -222,7 +221,7 @@ function Pricing({ offers, settings = {} }) {
                 </p>
               </div>
 
-              <a href="#contact" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cyan px-5 py-3 text-sm font-extrabold text-navy transition hover:-translate-y-1 hover:bg-white">
+              <a href="#contact" onClick={()=>request(`Estimation indicative : ${selectedType.name}, complexité ${selectedComplexity.label}, délai ${selectedDelivery.label}, ${screenCount} écrans/pages. Options : ${selectedOptions.join(', ')||'aucune'}. Fourchette : ${formatPrice(lowEstimate,currency)} à ${formatPrice(highEstimate,currency)}. À confirmer sur devis.`)} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cyan px-5 py-3 text-sm font-extrabold text-navy transition hover:-translate-y-1 hover:bg-white">
                 Recevoir une estimation detaillee
                 <MousePointerClick size={17} />
               </a>
@@ -296,6 +295,7 @@ function Pricing({ offers, settings = {} }) {
                       <button
                         key={option.label}
                         type="button"
+                        aria-pressed={active}
                         onClick={() => toggleOption(option.label)}
                         className={`flex items-center justify-between gap-3 rounded-lg border px-4 py-3 text-left text-sm font-extrabold transition ${
                           active ? 'border-cyan bg-cyan/10 text-navy' : 'border-slate-200 bg-cloud text-slate-600 hover:border-cyan hover:text-navy'

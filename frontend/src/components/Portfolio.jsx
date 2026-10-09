@@ -1,106 +1,24 @@
-import { motion } from 'framer-motion';
-import { ArrowUpRight, Cpu, Database, ShieldCheck } from 'lucide-react';
-import { projects as defaultProjects } from '../data/projects.js';
-
-function normalizeProject(project) {
-  return {
-    ...project,
-    technologies: Array.isArray(project.technologies)
-      ? project.technologies
-      : String(project.technologies || '')
-          .split(',')
-          .map((technology) => technology.trim())
-          .filter(Boolean),
-  };
+import { useEffect, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ArrowUpRight, X } from 'lucide-react';
+import CinematicMedia from './CinematicMedia.jsx';
+import { projects as defaults } from '../data/projects.js';
+import { projectPath, followProjectLink, visibleProjects } from '../lib/projects.js';
+function Mockup({project,large=false}){const gym=project.url==='https://gym-ten-chi.vercel.app/';const phone=project.category==='Mobile';return <div className={`project-mockup ${phone?'mockup-phone':''} ${large?'mockup-large':''}`}><div className="mockup-bar"><span/><span/><span/><p>{project.url?new URL(project.url).hostname:'INNOVIA / CONCEPT'}</p></div><img src={gym?'/project-gym.jpg':project.image||'/innovia-material-study.jpg'} alt={gym?'Capture du site Gym Ten Chi — IronEdge':`Visuel d’illustration : ${project.title}`} loading="lazy"/><span className="mockup-caption">{gym?'CAPTURE DU SITE':'VISUEL D’ILLUSTRATION'}</span></div>;}
+export default function Portfolio({loadedProjects}){
+ const [filter,setFilter]=useState('Tous');const [selected,setSelected]=useState(null);const dialog=useRef(null);const reduced=useReducedMotion();
+ const source=(Array.isArray(loadedProjects)?loadedProjects:defaults).filter(project=>project.visible!==false);
+ const projects=visibleProjects(source).sort((a,b)=>Number(Boolean(b.url))-Number(Boolean(a.url)));
+ const categories=['Tous',...new Set(projects.map(p=>p.category))];const visible=projects.filter(p=>filter==='Tous'||filter===p.category);
+ useEffect(()=>{if(selected)dialog.current?.showModal();},[selected]);
+ function close(){dialog.current?.close();setSelected(null);}
+ return <section id="portfolio" className="studio-portfolio section-padding scroll-mt-20"><div className="container-shell">
+ <div className="studio-section-heading"><span className="studio-kicker">02 / Sélection de projets</span><h2>Des idées devenues<br/><em>des expériences.</em></h2><p>Un aperçu du travail du studio. Les concepts sont distingués des sites consultables.</p></div>
+ <div className="project-filters" role="group" aria-label="Filtrer les projets">{categories.map(c=><button type="button" key={c} aria-pressed={filter===c} className={filter===c?'is-active':''} onClick={()=>setFilter(c)}>{c}</button>)}</div>
+ <p className="sr-only" aria-live="polite">{visible.length} {visible.length===1?'projet affiché':'projets affichés'}</p><div className="editorial-projects">{visible.map((project,index)=><motion.article key={project.id||project.title} initial={reduced?false:{opacity:0,y:22}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:.12}} transition={{duration:.65,ease:[.22,1,.36,1]}} className={`editorial-project ${index===0?'project-featured':''}`}>
+ <a className="project-preview" href={projectPath(project)} onClick={event=>{if(!event.metaKey&&!event.ctrlKey&&!event.shiftKey&&!event.altKey&&event.button===0)event.currentTarget.querySelector('img')?.style.setProperty('view-transition-name','project-visual');followProjectLink(event,projectPath(project));}} aria-label={`Voir le projet : ${project.title}`}><Mockup project={project}/><span className="preview-arrow"><ArrowUpRight size={24}/></span></a>
+ <div className="project-description"><div><small>{project.category} / {project.url?'Site consultable':'Concept de solution'}</small><h3>{project.title}</h3></div><p>{project.description}</p></div><div className="project-meta"><span>{project.technologies.join(' · ')}</span><button type="button" onClick={()=>setSelected(project)}>Aperçu rapide<ArrowUpRight size={15}/></button><a href={projectPath(project)} onClick={event=>followProjectLink(event,projectPath(project))}>Explorer le projet<ArrowUpRight size={15}/></a></div>
+ </motion.article>)}</div>
+ <dialog ref={dialog} className="project-dialog" aria-labelledby="project-dialog-title" onCancel={()=>setSelected(null)} onClick={e=>{if(e.target===dialog.current)close();}}>{selected&&<div className="project-dialog-inner"><button autoFocus type="button" className="dialog-close" onClick={close} aria-label="Fermer le projet"><X size={22}/></button><small>{selected.url?'Site consultable':'Concept de solution — visuel d’illustration'}</small><h2 id="project-dialog-title">{selected.title}</h2><Mockup project={selected} large/>{selected.url==='https://gym-ten-chi.vercel.app/' && <CinematicMedia name="gymCase"/>}<p>{selected.description}</p><p className="dialog-tech">{selected.technologies.join(' · ')}</p>{selected.url?<a className="studio-button" href={selected.url} target="_blank" rel="noreferrer">Visiter le site<ArrowUpRight size={17}/></a>:<a className="studio-button" href="#contact" onClick={close}>Parlons d’une solution similaire<ArrowUpRight size={17}/></a>}</div>}</dialog>
+ </div></section>;
 }
-
-function Portfolio({ loadedProjects }) {
-  const sourceProjects = Array.isArray(loadedProjects) && loadedProjects.length > 0 ? loadedProjects : defaultProjects;
-  const portfolioProjects = sourceProjects.map(normalizeProject);
-
-  return (
-    <section id="portfolio" className="section-padding scroll-mt-24 bg-cloud">
-      <div className="container-shell">
-        <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-          <div>
-            <span className="eyebrow">Projets tech</span>
-            <h2 className="section-title">
-              Des plateformes digitales, dashboards et systemes IA prets a soutenir votre croissance.
-            </h2>
-          </div>
-          <p className="max-w-xl text-base leading-8 text-slate-600">
-            Chaque projet met en avant une vraie brique technologique : interface web, automatisation,
-            architecture cloud, donnees, securite et experience utilisateur.
-          </p>
-        </div>
-
-        <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {portfolioProjects.map((project, index) => (
-            <motion.article
-              key={project.title}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.18 }}
-              transition={{ duration: 0.45, delay: index * 0.05 }}
-              className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-soft"
-            >
-              <div className="relative aspect-[16/10] overflow-hidden bg-navy">
-                <img
-                  src={project.image}
-                  alt={project.title}
-                  loading="lazy"
-                  className="h-full w-full object-cover opacity-90 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/20 to-cyan/10" />
-                <div className="absolute inset-0 tech-grid opacity-25" />
-                <span className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-md bg-white/90 px-3 py-1 text-xs font-extrabold text-navy backdrop-blur">
-                  <Cpu size={14} className="text-cyan" />
-                  Tech case {String(index + 1).padStart(2, '0')}
-                </span>
-                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-lg border border-white/15 bg-navy/75 px-4 py-3 text-white backdrop-blur">
-                  <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-cyan">
-                    <Database size={14} />
-                    Digital platform
-                  </span>
-                  <ShieldCheck size={18} className="text-cyan" />
-                </div>
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-extrabold leading-snug text-navy">{project.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">{project.description}</p>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {project.technologies.map((technology) => (
-                    <span key={technology} className="rounded-md bg-cyan/10 px-3 py-1 text-xs font-bold text-cyan">
-                      {technology}
-                    </span>
-                  ))}
-                </div>
-                {project.url ? (
-                  <a
-                    href={project.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold text-navy transition hover:text-cyan"
-                  >
-                    Voir le site
-                    <ArrowUpRight size={17} />
-                  </a>
-                ) : (
-                  <button
-                    type="button"
-                    className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold text-navy transition hover:text-cyan"
-                  >
-                    Voir details
-                    <ArrowUpRight size={17} />
-                  </button>
-                )}
-              </div>
-            </motion.article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export default Portfolio;
